@@ -3,7 +3,11 @@ import { DbConnect } from "@/db/connection";
 import { Booking, TourPackage, User } from "@/db/models";
 import { createBookingSchema } from "@/utils/zod/types";
 import { getAuthFromCookies } from "@/lib/auth-api";
-import { parseTravelDateFromClient, serializeBooking } from "@/lib/booking";
+import {
+  parseTravelDateFromClient,
+  serializeBooking,
+  travelDateIsBeforeLocalToday,
+} from "@/lib/booking";
 
 type LeanPackage = {
   _id: unknown;
@@ -110,6 +114,12 @@ export async function POST(req: Request) {
     const date = parseTravelDateFromClient(travelDate);
     if (!date) {
       return NextResponse.json({ message: "Invalid travel date" }, { status: 400 });
+    }
+    if (travelDateIsBeforeLocalToday(date.toISOString())) {
+      return NextResponse.json(
+        { message: "Travel date must be today or later" },
+        { status: 400 }
+      );
     }
 
     await DbConnect();

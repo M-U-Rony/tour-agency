@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SiteHeader from "@/components/site-header";
 
-export default function SignUp() {
+export default function SignUp({ next = null }: { next?: string | null }) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
@@ -32,7 +33,7 @@ export default function SignUp() {
         throw new Error(data.message || "Failed to sign up");
       }
 
-      router.push("/signin");
+      router.push(`/signin${next ? `?next=${encodeURIComponent(next)}` : ""}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to sign up");
     } finally {
@@ -41,30 +42,21 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#ecf7ff_0%,#f7fbfd_32%,#ffffff_100%)] flex items-center justify-center p-6 py-12">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/70 p-8">
-        <div className="text-center mb-8">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 mb-4 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-sky-900 flex items-center justify-center shadow-lg shadow-sky-200 group-hover:shadow-sky-300 transition-shadow">
-              <span className="text-white font-bold text-sm">EB</span>
-            </div>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              Explore<span className="text-sky-700">BD</span>
-            </span>
-          </Link>
-          <h2 className="text-2xl font-bold text-slate-900">
-            Create an account
-          </h2>
-          <p className="text-slate-500 text-sm mt-2">
-            Join us to start exploring Bangladesh
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <SiteHeader backHref="/" backLabel="Home" ctaHref="/tours" ctaLabel="Browse tours" />
+      <div className="mx-auto flex max-w-6xl items-center justify-center px-4 py-10 sm:px-6">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+          <div className="mb-7">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Create your account
+            </h1>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Sign up to request bookings and track your trips.
+            </p>
+          </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100">
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
             {error}
           </div>
         )}
@@ -72,13 +64,13 @@ export default function SignUp() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              Username
+              Name
             </label>
             <input
               type="text"
               required
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
-              placeholder="Choose a username"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              placeholder="Your name"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -93,7 +85,7 @@ export default function SignUp() {
             <input
               type="email"
               required
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
               placeholder="Enter your email"
               value={formData.email}
               onChange={(e) =>
@@ -109,7 +101,7 @@ export default function SignUp() {
             <input
               type="password"
               required
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
               placeholder="Create a strong password"
               value={formData.password}
               onChange={(e) =>
@@ -121,21 +113,22 @@ export default function SignUp() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center py-3 bg-sky-900 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-sky-200 hover:-translate-y-0.5 transition-all active:translate-y-0 disabled:opacity-70 disabled:hover:translate-y-0 disabled:shadow-none mt-2"
+            className="mt-2 w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition-colors hover:bg-indigo-700 disabled:opacity-60 dark:hover:bg-indigo-500"
           >
             {loading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
+        <p className="mt-7 text-center text-sm text-slate-600 dark:text-slate-400">
           Already have an account?{" "}
           <Link
-            href="/signin"
-            className="font-semibold text-sky-700 hover:text-sky-800"
+            href={`/signin${next ? `?next=${encodeURIComponent(next)}` : ""}`}
+            className="font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
           >
             Sign in
           </Link>
         </p>
+      </div>
       </div>
     </div>
   );

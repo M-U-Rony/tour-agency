@@ -1,5 +1,10 @@
 import SignIn from "@/components/signin";
 
-export default function SignInPage() {
-  return <SignIn />;
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+  return <SignIn next={next ?? null} />;
 }

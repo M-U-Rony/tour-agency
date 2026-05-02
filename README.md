@@ -16,6 +16,19 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Package images (important)
+
+When you create a tour package, the image upload endpoint can work in two modes:
+
+- **Cloudinary (recommended)**: images are uploaded to Cloudinary and stored as a public URL in MongoDB, so everyone can see them after you push/deploy.
+- **Local fallback**: images are saved under `public/uploads/packages/` on the current machine. This is **not shared** via GitHub, so other PCs won’t see those images unless they exist on their machine/server.
+
+To enable Cloudinary, add these environment variables:
+
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

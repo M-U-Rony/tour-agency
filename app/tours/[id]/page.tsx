@@ -6,6 +6,7 @@ import { TourPackage } from "@/db/models";
 import { serializeTourPackage, formatBdt } from "@/lib/tour-package";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import BookPackageForm from "@/components/book-package-form";
+import SiteHeader from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
@@ -42,22 +43,13 @@ export default async function TourDetailPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
-          <Link
-            href="/tours"
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
-          >
-            ← All tours
-          </Link>
-          <Link
-            href="/"
-            className="text-sm font-semibold text-slate-600 hover:text-slate-800 dark:text-slate-300"
-          >
-            ExploreBD
-          </Link>
-        </div>
-      </header>
+      <SiteHeader
+        backHref="/tours"
+        backLabel="All tours"
+        ctaHref="/dashboard"
+        ctaLabel="Dashboard"
+        isAuthed={!!auth}
+      />
 
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Phone, Users, MessageSquare } from "lucide-react";
 import { formatBdt } from "@/lib/tour-package";
+import { travelDateInputMinLocal } from "@/lib/booking";
 
 type Props = {
   packageId: string;
@@ -34,6 +35,7 @@ export default function BookPackageForm({
     () => Math.max(0, travelers) * pricePerPerson,
     [travelers, pricePerPerson]
   );
+  const minTravelDate = useMemo(() => travelDateInputMinLocal(), []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +66,10 @@ export default function BookPackageForm({
       if (!res.ok) {
         throw new Error(data.message || "Could not create booking");
       }
+      setTravelDate("");
+      setTravelers(2);
+      setContactPhone("");
+      setNotes("");
       setMessage({
         type: "ok",
         text: "Booking submitted. You can track it in your dashboard.",
@@ -163,9 +169,30 @@ export default function BookPackageForm({
           <input
             required
             type="date"
+            min={minTravelDate}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
             value={travelDate}
             onChange={(e) => setTravelDate(e.target.value)}
+            onClick={(e) => {
+              const el = e.currentTarget as HTMLInputElement & {
+                showPicker?: () => void;
+              };
+              try {
+                el.showPicker?.();
+              } catch {
+                // ignore: some browsers block programmatic opening
+              }
+            }}
+            onFocus={(e) => {
+              const el = e.currentTarget as HTMLInputElement & {
+                showPicker?: () => void;
+              };
+              try {
+                el.showPicker?.();
+              } catch {
+                // ignore
+              }
+            }}
           />
         </label>
 
@@ -224,7 +251,8 @@ export default function BookPackageForm({
               : "Sign in to book"}
         </button>
         <p className="text-center text-xs text-slate-500">
-          Booking is a request. Our team will confirm availability shortly.
+          Booking is a request. Choose today or a future date and our team will confirm
+          availability shortly.
         </p>
       </div>
     </form>
