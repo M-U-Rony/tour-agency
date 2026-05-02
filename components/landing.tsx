@@ -1,5 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { TourPackageDTO } from "@/lib/tour-package";
+import { formatBdt } from "@/lib/tour-package";
+import type { AuthUser } from "@/lib/auth-user";
 
 const destinations = [
   {
@@ -29,32 +32,41 @@ const destinations = [
   },
 ] as const;
 
-const packages = [
+const fallbackPackages = [
   {
+    id: "fallback-1",
     title: "Cox's Bazar Premium Escape",
     duration: "4 Days / 3 Nights",
-    price: "৳18,500",
-    rating: "4.9",
-    description: "Beachfront hotel, AC transport, seafood dining, and curated leisure activities.",
-    image: "/sea beach.jpg",
+    priceBdt: 18500,
+    rating: 4.9,
+    shortDescription:
+      "Beachfront hotel, AC transport, seafood dining, and curated leisure activities.",
+    imageUrl: "/sea beach.jpg",
+    location: "Cox's Bazar",
   },
   {
+    id: "fallback-2",
     title: "Sajek Sky Trail",
     duration: "3 Days / 2 Nights",
-    price: "৳12,500",
-    rating: "4.8",
-    description: "Hilltop resort stay, transport from Dhaka, local guide, and scenic sunrise tour.",
-    image: "/sajek.jpg",
+    priceBdt: 12500,
+    rating: 4.8,
+    shortDescription:
+      "Hilltop resort stay, transport from Dhaka, local guide, and scenic sunrise tour.",
+    imageUrl: "/sajek.jpg",
+    location: "Sajek",
   },
   {
+    id: "fallback-3",
     title: "Sylhet Tea Garden Retreat",
     duration: "5 Days / 4 Nights",
-    price: "৳22,900",
-    rating: "4.9",
-    description: "Comfort stay, tea estate tours, Ratargul visit, and private intercity transport.",
-    image: "/tea garden 2.jpg",
+    priceBdt: 22900,
+    rating: 4.9,
+    shortDescription:
+      "Comfort stay, tea estate tours, Ratargul visit, and private intercity transport.",
+    imageUrl: "/tea garden 2.jpg",
+    location: "Sylhet",
   },
-] as const;
+] satisfies TourPackageDTO[];
 
 const reasons = [
   "Trusted tour guides",
@@ -121,7 +133,17 @@ function CheckIcon() {
   );
 }
 
-export default function Landing() {
+type LandingProps = {
+  topPackages?: TourPackageDTO[];
+  currentUser?: AuthUser | null;
+};
+
+export default function Landing({ topPackages, currentUser }: LandingProps = {}) {
+  const packages =
+    topPackages && topPackages.length > 0 ? topPackages : fallbackPackages;
+  const user = currentUser ?? null;
+  const isLive = !!(topPackages && topPackages.length > 0);
+
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ecf7ff_0%,#f7fbfd_32%,#ffffff_100%)] text-slate-900">
       <section className="relative isolate overflow-hidden">
@@ -165,18 +187,27 @@ export default function Landing() {
             </nav>
 
             <div className="hidden items-center gap-3 md:flex">
+              {user ? (
+                <Link
+                  href={user.role === "admin" ? "/admin/dashboard" : "/dashboard"}
+                  className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                >
+                  Hi, {user.username.split(/\s+/)[0]}
+                </Link>
+              ) : (
+                <Link
+                  href="/signin"
+                  className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                >
+                  Login / Sign Up
+                </Link>
+              )}
               <Link
-                href="/signin"
-                className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-              >
-                Login / Sign Up
-              </Link>
-              <a
-                href="#cta"
+                href="/tours"
                 className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-sky-950 shadow-lg shadow-sky-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-100"
               >
                 Book Now
-              </a>
+              </Link>
             </div>
           </header>
 
@@ -197,12 +228,12 @@ export default function Landing() {
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <a
-                  href="#packages"
+                <Link
+                  href="/tours"
                   className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-7 py-4 text-base font-semibold text-slate-950 shadow-[0_18px_50px_rgba(16,185,129,0.28)] transition hover:-translate-y-0.5 hover:bg-emerald-300"
                 >
                   Explore Tours
-                </a>
+                </Link>
                 <a
                   href="#contact"
                   className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-7 py-4 text-base font-semibold text-white backdrop-blur transition hover:bg-white/16"
@@ -211,40 +242,52 @@ export default function Landing() {
                 </a>
               </div>
 
-              <div className="mt-10 grid max-w-2xl gap-4 rounded-4xl border border-white/18 bg-white/10 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl md:grid-cols-[1.2fr_1fr_0.8fr_auto]">
+              <form
+                action="/tours"
+                method="GET"
+                className="mt-10 grid max-w-2xl gap-4 rounded-4xl border border-white/18 bg-white/10 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl md:grid-cols-[1.2fr_1fr_0.8fr_auto]"
+              >
                 <label className="space-y-2 rounded-2xl bg-white/92 px-4 py-3 text-slate-700">
                   <span className="block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                     Destination
                   </span>
                   <input
                     type="text"
+                    name="location"
                     placeholder="Where do you want to go?"
                     className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
                   />
                 </label>
                 <label className="space-y-2 rounded-2xl bg-white/92 px-4 py-3 text-slate-700">
                   <span className="block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Travel Date
+                    Duration
                   </span>
                   <input
-                    type="date"
-                    className="w-full bg-transparent text-sm font-medium outline-none"
+                    type="text"
+                    name="duration"
+                    placeholder="3 Days"
+                    className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
                   />
                 </label>
                 <label className="space-y-2 rounded-2xl bg-white/92 px-4 py-3 text-slate-700">
                   <span className="block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Guests
+                    Max ৳
                   </span>
-                  <select className="w-full bg-transparent text-sm font-medium outline-none">
-                    <option>2 Travelers</option>
-                    <option>4 Travelers</option>
-                    <option>6+ Travelers</option>
-                  </select>
+                  <input
+                    type="number"
+                    name="maxPrice"
+                    min={0}
+                    placeholder="20000"
+                    className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
+                  />
                 </label>
-                <button className="rounded-2xl bg-sky-900 px-6 py-4 text-sm font-semibold text-white transition hover:bg-sky-800">
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-sky-900 px-6 py-4 text-sm font-semibold text-white transition hover:bg-sky-800"
+                >
                   Search
                 </button>
-              </div>
+              </form>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-1">
@@ -301,12 +344,12 @@ export default function Landing() {
               escapes designed for comfort and discovery.
             </p>
           </div>
-          <a
-            href="#packages"
+          <Link
+            href="/tours"
             className="inline-flex w-fit items-center rounded-full border border-sky-200 bg-white px-5 py-3 text-sm font-semibold text-sky-900 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"
           >
             View all tours
-          </a>
+          </Link>
         </div>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-5">
@@ -331,12 +374,12 @@ export default function Landing() {
               <div className="space-y-4 p-6">
                 <h3 className="text-2xl font-semibold text-slate-900">{destination.name}</h3>
                 <p className="text-sm leading-7 text-slate-600">{destination.description}</p>
-                <a
-                  href="#contact"
+                <Link
+                  href={`/tours?location=${encodeURIComponent(destination.name)}`}
                   className="inline-flex items-center rounded-full bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-900 transition hover:bg-emerald-50 hover:text-emerald-800"
                 >
                   Explore destination
-                </a>
+                </Link>
               </div>
             </article>
           ))}
@@ -364,41 +407,57 @@ export default function Landing() {
           <div className="mt-10 grid gap-6 xl:grid-cols-3">
             {packages.map((tourPackage) => (
               <article
-                key={tourPackage.title}
+                key={tourPackage.id}
                 className="overflow-hidden rounded-4xl bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70"
               >
                 <div className="relative h-72">
                   <Image
-                    src={tourPackage.image}
+                    src={tourPackage.imageUrl}
                     alt={tourPackage.title}
                     fill
                     sizes="(min-width: 1280px) 33vw, 100vw"
                     className="object-cover"
+                    unoptimized={tourPackage.imageUrl.startsWith("http")}
                   />
                   <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-linear-to-t from-slate-950/70 to-transparent px-6 py-6 text-white">
                     <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
                       {tourPackage.duration}
                     </span>
-                    <span className="text-2xl font-semibold">{tourPackage.price}</span>
+                    <span className="text-2xl font-semibold">
+                      {formatBdt(tourPackage.priceBdt)}
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-4 p-6">
                   <div className="flex items-center justify-between gap-4">
-                    <h3 className="text-2xl font-semibold text-slate-900">{tourPackage.title}</h3>
+                    <h3 className="text-2xl font-semibold text-slate-900">
+                      {tourPackage.title}
+                    </h3>
                     <div className="text-right">
                       <StarRow />
                       <p className="mt-1 text-sm font-semibold text-slate-500">
-                        {tourPackage.rating}/5
+                        {tourPackage.rating.toFixed(1)}/5
                       </p>
                     </div>
                   </div>
-                  <p className="text-sm leading-7 text-slate-600">{tourPackage.description}</p>
-                  <a
-                    href="#contact"
-                    className="inline-flex items-center rounded-full bg-sky-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800"
-                  >
-                    View Details
-                  </a>
+                  <p className="text-sm leading-7 text-slate-600">
+                    {tourPackage.shortDescription}
+                  </p>
+                  {isLive ? (
+                    <Link
+                      href={`/tours/${tourPackage.id}`}
+                      className="inline-flex items-center rounded-full bg-sky-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800"
+                    >
+                      View Details
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/tours"
+                      className="inline-flex items-center rounded-full bg-sky-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800"
+                    >
+                      Browse all tours
+                    </Link>
+                  )}
                 </div>
               </article>
             ))}
@@ -522,7 +581,7 @@ export default function Landing() {
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-100">
               Ready for Your Next Adventure?
             </p>
-            <h2 className="mt-4 font-[family-name:Georgia,Times_New_Roman,serif] text-4xl font-semibold sm:text-5xl">
+            <h2 className="mt-4 font-[Georgia,Times_New_Roman,serif] text-4xl font-semibold sm:text-5xl">
               Let ExploreBD Tours design your perfect Bangladesh getaway
             </h2>
             <p className="mt-5 text-lg leading-8 text-sky-50/88">
@@ -531,12 +590,12 @@ export default function Landing() {
             </p>
           </div>
           <div className="mt-8 lg:mt-0">
-            <a
-              href="#contact"
+            <Link
+              href="/tours"
               className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-semibold text-sky-950 shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-100"
             >
               Book Your Tour Today
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -562,9 +621,9 @@ export default function Landing() {
               <a href="#home" className="block transition hover:text-white">
                 Home
               </a>
-              <a href="#packages" className="block transition hover:text-white">
+              <Link href="/tours" className="block transition hover:text-white">
                 Packages
-              </a>
+              </Link>
               <a href="#destinations" className="block transition hover:text-white">
                 Destinations
               </a>

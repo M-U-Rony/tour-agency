@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { User } from "@/db/models";
 import { DbConnect } from "@/db/connection"
 import { loginUserSchema } from "@/utils/zod/types";
+import { toAuthUser } from "@/lib/auth-user";
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +19,6 @@ export async function POST(req: Request) {
     const { email, password } = result.data;
 
     const user = await User.findOne({ email });
-    console.log(user)
     
     if (!user) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
@@ -32,17 +32,12 @@ export async function POST(req: Request) {
 
 
     const token = jwt.sign(
-      { id: user._id, username: user.name, role: user.role },
+      { id: String(user._id), username: user.name, role: user.role },
       process.env.JWT_SECRET!,
       { expiresIn: "1d" }
     );
 
-    const userWithoutHash = {
-      id: user._id,
-      username: user.name,
-      email: user.email,
-      role: user.role
-    };
+    const userWithoutHash = toAuthUser(user);
 
     const response = NextResponse.json(
       { message: "Logged in successfully", user: userWithoutHash, token },
