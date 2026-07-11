@@ -3,7 +3,11 @@ import { DbConnect } from "@/db/connection";
 import { Booking, TourPackage } from "@/db/models";
 import { updateBookingStatusSchema } from "@/utils/zod/types";
 import { getAuthFromCookies } from "@/lib/auth-api";
-import { serializeBooking, type BookingStatus } from "@/lib/booking";
+import {
+  serializeBooking,
+  type BookingStatus,
+  type PaymentStatus,
+} from "@/lib/booking";
 
 type LeanPackage = {
   _id: unknown;
@@ -22,7 +26,13 @@ type LeanBooking = {
   travelers: number;
   contactPhone: string;
   notes?: string;
+  travelerNames?: string[];
+  emergencyContact?: string;
   status: BookingStatus;
+  paymentStatus?: PaymentStatus;
+  paymentMethod?: string;
+  transactionId?: string;
+  adminNotes?: string;
   totalPriceBdt: number;
   createdAt: Date;
 };
@@ -74,7 +84,21 @@ export async function PATCH(
       }
     }
 
-    booking.status = parsed.data.status;
+    if (isAdmin) {
+      if (parsed.data.status) booking.status = parsed.data.status;
+      if (parsed.data.paymentStatus) booking.paymentStatus = parsed.data.paymentStatus;
+      if (parsed.data.paymentMethod !== undefined) {
+        booking.paymentMethod = parsed.data.paymentMethod;
+      }
+      if (parsed.data.transactionId !== undefined) {
+        booking.transactionId = parsed.data.transactionId;
+      }
+      if (parsed.data.adminNotes !== undefined) {
+        booking.adminNotes = parsed.data.adminNotes;
+      }
+    } else {
+      booking.status = "cancelled";
+    }
     await booking.save();
 
     const pkg = await TourPackage.findById(booking.packageId)

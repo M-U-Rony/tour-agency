@@ -4,6 +4,7 @@ import { Booking, TourPackage, User } from "@/db/models";
 import { createBookingSchema } from "@/utils/zod/types";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import {
+  type PaymentStatus,
   parseTravelDateFromClient,
   serializeBooking,
   travelDateIsBeforeLocalToday,
@@ -70,7 +71,13 @@ export async function GET(req: Request) {
           travelers: d.travelers,
           contactPhone: d.contactPhone,
           notes: d.notes,
+          travelerNames: d.travelerNames,
+          emergencyContact: d.emergencyContact,
           status: d.status,
+          paymentStatus: d.paymentStatus,
+          paymentMethod: d.paymentMethod,
+          transactionId: d.transactionId,
+          adminNotes: d.adminNotes,
           totalPriceBdt: d.totalPriceBdt,
           createdAt: d.createdAt,
         },
@@ -110,6 +117,12 @@ export async function POST(req: Request) {
     }
 
     const { packageId, travelDate, travelers, contactPhone, notes } = parsed.data;
+    const {
+      travelerNames,
+      emergencyContact,
+      paymentMethod,
+      transactionId,
+    } = parsed.data;
 
     const date = parseTravelDateFromClient(travelDate);
     if (!date) {
@@ -137,7 +150,13 @@ export async function POST(req: Request) {
       travelers,
       contactPhone,
       notes: notes ?? "",
+      travelerNames,
+      emergencyContact,
       status: "pending",
+      paymentStatus:
+        paymentMethod || transactionId ? ("advance_due" as PaymentStatus) : "unpaid",
+      paymentMethod,
+      transactionId,
       totalPriceBdt,
     });
 

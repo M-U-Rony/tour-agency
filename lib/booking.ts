@@ -1,4 +1,10 @@
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
+export type PaymentStatus =
+  | "unpaid"
+  | "advance_due"
+  | "advance_paid"
+  | "paid"
+  | "refunded";
 
 const TRAVEL_DATE_INPUT_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -23,9 +29,9 @@ export function parseTravelDateFromClient(input: string): Date | null {
 
 /** Format a booking travel instant (UTC midnight for that calendar day) for display. */
 export function formatTravelDate(iso: string): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -76,7 +82,13 @@ export type BookingDTO = {
   travelers: number;
   contactPhone: string;
   notes: string;
+  travelerNames: string[];
+  emergencyContact: string;
   status: BookingStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: string;
+  transactionId: string;
+  adminNotes: string;
   totalPriceBdt: number;
   createdAt: string;
   package?: {
@@ -117,7 +129,13 @@ type RawBooking = {
   travelers: number;
   contactPhone: string;
   notes?: string;
+  travelerNames?: string[];
+  emergencyContact?: string;
   status: BookingStatus;
+  paymentStatus?: PaymentStatus;
+  paymentMethod?: string;
+  transactionId?: string;
+  adminNotes?: string;
   totalPriceBdt: number;
   createdAt: Date | string;
 };
@@ -141,7 +159,13 @@ export function serializeBooking(
     travelers: doc.travelers,
     contactPhone: doc.contactPhone,
     notes: doc.notes ?? "",
+    travelerNames: doc.travelerNames ?? [],
+    emergencyContact: doc.emergencyContact ?? "",
     status: doc.status,
+    paymentStatus: doc.paymentStatus ?? "unpaid",
+    paymentMethod: doc.paymentMethod ?? "",
+    transactionId: doc.transactionId ?? "",
+    adminNotes: doc.adminNotes ?? "",
     totalPriceBdt: doc.totalPriceBdt,
     createdAt: toIso(doc.createdAt),
     package: pkg
@@ -169,4 +193,12 @@ export const BOOKING_STATUS_LABEL: Record<BookingStatus, string> = {
   confirmed: "Confirmed",
   cancelled: "Cancelled",
   completed: "Completed",
+};
+
+export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
+  unpaid: "Unpaid",
+  advance_due: "Advance due",
+  advance_paid: "Advance paid",
+  paid: "Paid",
+  refunded: "Refunded",
 };

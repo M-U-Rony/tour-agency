@@ -10,16 +10,7 @@ export async function GET() {
     await DbConnect();
     const docs = await TourPackage.find().sort({ createdAt: -1 }).lean();
     const packages = docs.map((doc) =>
-      serializeTourPackage({
-        _id: doc._id,
-        title: doc.title,
-        location: doc.location,
-        duration: doc.duration,
-        priceBdt: doc.priceBdt,
-        rating: doc.rating,
-        shortDescription: doc.shortDescription,
-        imageUrl: doc.imageUrl,
-      })
+      serializeTourPackage(doc)
     );
     return NextResponse.json({ packages });
   } catch (error) {
@@ -45,7 +36,11 @@ export async function POST(req: Request) {
     }
 
     await DbConnect();
-    const doc = await TourPackage.create({ ...parsed.data, rating: 0 });
+    const doc = await TourPackage.create({
+      ...parsed.data,
+      availableDates: parsed.data.availableDates.map((d) => new Date(d)),
+      rating: 0,
+    });
     const pkg = serializeTourPackage(doc.toObject());
     return NextResponse.json({ package: pkg }, { status: 201 });
   } catch (error) {

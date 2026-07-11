@@ -3,13 +3,17 @@ export type AuthUser = {
   username: string;
   email: string;
   role: "user" | "admin";
+  profileImage?: string;
+  profilePage?: string;
 };
 
-type UserDoc = {
+export type UserDoc = {
   _id: unknown;
   name: string;
   email: string;
   role: string;
+  profileImage?: string;
+  profilePage?: string;
 };
 
 export function toAuthUser(user: UserDoc): AuthUser {
@@ -18,5 +22,7 @@ export function toAuthUser(user: UserDoc): AuthUser {
     username: user.name,
     email: user.email,
     role: user.role === "admin" ? "admin" : "user",
+    profileImage: user.profileImage ?? "",
+    profilePage: user.profilePage ?? "",
   };
 }

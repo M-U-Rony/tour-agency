@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
-export async function POST() {
-  const res = NextResponse.json({ message: "Signed out" });
+export async function POST(req: Request) {
+  const url = new URL(req.url);
+  const redirectTo = url.searchParams.get("next") || "/";
+  const res = NextResponse.redirect(new URL(redirectTo, req.url), {
+    status: 303,
+  });
   res.cookies.set({
     name: "token",
     value: "",

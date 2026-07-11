@@ -23,16 +23,16 @@ export default function AdminDashboardPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[#f4fbf8]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" />
       </div>
     );
   }
 
   if (user.role !== "admin") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[#f4fbf8]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" />
       </div>
     );
   }

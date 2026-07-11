@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { AuthUser } from "@/lib/auth-user";
 import { clientSignOut } from "@/lib/client-auth";
 import {
@@ -17,16 +17,19 @@ import {
   Plane,
   CreditCard,
   Clock,
+  User,
 } from "lucide-react";
 import type { BookingDTO, BookingStatus } from "@/lib/booking";
 import {
   BOOKING_STATUS_LABEL,
+  PAYMENT_STATUS_LABEL,
   formatTravelDate,
   travelDateDaysFromLocalToday,
   travelDateIsBeforeLocalToday,
   travelDateIsOnOrAfterLocalToday,
 } from "@/lib/booking";
 import { formatBdt } from "@/lib/tour-package";
+import { getUserAvatarUrl } from "@/lib/user-avatar";
 
 function displayFirstName(username: string) {
   const part = username.trim().split(/\s+/)[0];
@@ -35,20 +38,21 @@ function displayFirstName(username: string) {
 
 const STATUS_STYLE: Record<BookingStatus, string> = {
   pending:
-    "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
+    "bg-amber-50 text-amber-800 border-amber-200",
   confirmed:
-    "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
+    "bg-emerald-50 text-emerald-800 border-emerald-200",
   cancelled:
-    "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20",
+    "bg-red-50 text-red-700 border-red-200",
   completed:
-    "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+    "bg-slate-100 text-slate-700 border-slate-200",
 };
 
 export default function UserDashboard({ user }: { user: AuthUser }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const firstName = displayFirstName(user.username);
-  const avatarSrc = `https://i.pravatar.cc/150?u=${encodeURIComponent(user.email)}`;
+  const avatarSrc = getUserAvatarUrl(user);
 
   const [bookings, setBookings] = useState<BookingDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +119,7 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#f4fbf8] text-slate-900 font-sans overflow-hidden">
       {isSidebarOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/50 lg:hidden backdrop-blur-sm transition-opacity"
@@ -124,13 +128,13 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
       )}
 
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 transition-transform duration-300 ease-in-out ${
+        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-emerald-100 transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         <div className="flex flex-col h-full">
-          <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-xl tracking-tight">
+          <div className="h-16 flex items-center px-6 border-b border-emerald-100">
+            <div className="flex items-center gap-2 text-teal-700 font-bold text-xl tracking-tight">
               <Plane className="w-6 h-6" />
               <span>ExploreBD</span>
             </div>
@@ -148,14 +152,29 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
               icon={<CalendarDays size={20} />}
               label="My Bookings"
               href="/dashboard"
-              active
+              active={pathname === "/dashboard"}
+            />
+            <NavItem
+              icon={<Plane size={20} />}
+              label="My custom trips"
+              href="/custom-trips"
+              active={pathname === "/custom-trips"}
+            />
+            <div className="mt-3 px-4 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-400 border-t border-emerald-100">
+              Profile
+            </div>
+            <NavItem
+              icon={<User size={20} />}
+              label="Edit profile"
+              href="/profile"
+              active={pathname === "/profile"}
             />
           </nav>
 
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="p-4 border-t border-emerald-100">
             <button
               type="button"
-              className="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
               onClick={() => void clientSignOut(router)}
             >
               <LogOut size={20} />
@@ -166,10 +185,10 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
       </aside>
 
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <header className="h-16 flex items-center justify-between px-6 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-10 sticky top-0">
+        <header className="h-16 flex items-center justify-between px-6 bg-white/90 backdrop-blur-md border-b border-emerald-100 z-10 sticky top-0">
           <div className="flex items-center gap-4">
             <button
-              className="lg:hidden text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              className="lg:hidden text-slate-500 hover:text-slate-900"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu className="w-6 h-6" />
@@ -178,7 +197,7 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+            <button className="relative p-2 text-slate-500 hover:text-slate-900 transition-colors rounded-full hover:bg-emerald-50">
               <Bell className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3 cursor-pointer pl-2 hover:opacity-80 transition-opacity">
@@ -186,7 +205,7 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
               <img
                 src={avatarSrc}
                 alt=""
-                className="w-9 h-9 rounded-full object-cover border-2 border-indigo-200 dark:border-indigo-900 shadow-sm"
+                className="w-9 h-9 rounded-full object-cover border-2 border-teal-200 shadow-sm"
               />
               <div className="hidden md:block text-sm">
                 <p className="font-medium">{user.username}</p>
@@ -203,13 +222,13 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
               <h2 className="text-2xl font-bold tracking-tight">
                 Welcome back, {firstName}!
               </h2>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-slate-500 mt-1">
                 Here are your upcoming and past bookings.
               </p>
             </div>
 
             {next ? (
-              <div className="relative rounded-3xl overflow-hidden shadow-lg shadow-indigo-900/5 border border-indigo-100 dark:border-indigo-900/30">
+              <div className="relative rounded-3xl overflow-hidden shadow-lg shadow-teal-900/5 border border-teal-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={
@@ -260,7 +279,7 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
                     {next.package && (
                       <Link
                         href={`/tours/${next.package.id}`}
-                        className="flex-1 md:flex-none flex justify-center items-center gap-2 px-5 py-3 bg-white text-slate-900 hover:bg-slate-50 font-semibold rounded-xl transition-colors shadow-sm"
+                        className="flex-1 md:flex-none flex justify-center items-center gap-2 px-5 py-3 bg-white text-slate-900 hover:bg-[#f4fbf8] font-semibold rounded-xl transition-colors shadow-sm"
                       >
                         View tour
                       </Link>
@@ -279,14 +298,14 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
                 </div>
               </div>
             ) : (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-slate-700 dark:bg-slate-950">
+              <div className="rounded-3xl border border-dashed border-emerald-200 bg-white p-10 text-center">
                 <h3 className="text-xl font-bold">No upcoming trips</h3>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-2 text-sm text-slate-600">
                   Browse our packages and request your next adventure.
                 </p>
                 <Link
                   href="/tours"
-                  className="mt-5 inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+                  className="mt-5 inline-block rounded-xl bg-teal-50 text-teal-900 px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-teal-100 shadow-sm"
                 >
                   Explore tours
                 </Link>
@@ -299,7 +318,7 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
                   <h3 className="text-xl font-bold">Upcoming bookings</h3>
                   <Link
                     href="/tours"
-                    className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                    className="text-sm font-medium text-teal-700 hover:text-teal-800 hover:underline"
                   >
                     Book another
                   </Link>
@@ -307,10 +326,10 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
 
                 {loading ? (
                   <div className="flex justify-center py-10">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
                   </div>
                 ) : upcoming.length === 0 ? (
-                  <p className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950">
+                  <p className="rounded-2xl border border-dashed border-emerald-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
                     No upcoming bookings yet.
                   </p>
                 ) : (
@@ -328,7 +347,7 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
               </div>
 
               <div className="space-y-6">
-                <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                <div className="bg-white rounded-2xl border border-emerald-100 p-6 shadow-sm">
                   <h3 className="text-lg font-bold mb-4">Past trips</h3>
                   {past.length === 0 ? (
                     <p className="text-sm text-slate-500">No past trips yet.</p>
@@ -337,9 +356,9 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
                       {past.slice(0, 6).map((b) => (
                         <div
                           key={b.id}
-                          className="flex gap-4 p-3 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-colors"
+                          className="flex gap-4 p-3 hover:bg-[#f4fbf8] rounded-xl transition-colors"
                         >
-                          <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 shrink-0">
+                          <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 shrink-0">
                             <MapPin size={22} />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -380,7 +399,7 @@ function BookingRow({
 }) {
   const days = travelDateDaysFromLocalToday(booking.travelDate);
   return (
-    <div className="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 shadow-sm">
+    <div className="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl border border-emerald-100 bg-white shadow-sm">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={
@@ -406,7 +425,7 @@ function BookingRow({
             {BOOKING_STATUS_LABEL[booking.status]}
           </span>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
           <span className="inline-flex items-center gap-1">
             <CalendarDays size={14} /> {formatTravelDate(booking.travelDate)}
             {days != null && days >= 0 && (
@@ -418,15 +437,19 @@ function BookingRow({
           <span className="inline-flex items-center gap-1">
             <UsersIcon size={14} /> {booking.travelers}
           </span>
-          <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+          <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
             {formatBdt(booking.totalPriceBdt)}
           </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-800">
+            {PAYMENT_STATUS_LABEL[booking.paymentStatus]}
+          </span>
         </div>
+        <BookingTimeline booking={booking} />
         <div className="mt-3 flex flex-wrap gap-2">
           {booking.package && (
             <Link
               href={`/tours/${booking.package.id}`}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
+              className="rounded-lg border border-emerald-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#f4fbf8]"
             >
               View tour
             </Link>
@@ -436,13 +459,134 @@ function BookingRow({
               type="button"
               disabled={cancelling}
               onClick={onCancel}
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
             >
               {cancelling ? "Cancelling…" : "Cancel"}
             </button>
           )}
+          {booking.status === "completed" && (
+            <ReviewPrompt booking={booking} />
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function BookingTimeline({ booking }: { booking: BookingDTO }) {
+  const steps = [
+    { id: "pending", label: "Requested", done: true },
+    {
+      id: "confirmed",
+      label: "Confirmed",
+      done: booking.status === "confirmed" || booking.status === "completed",
+    },
+    {
+      id: "payment",
+      label: "Payment noted",
+      done:
+        booking.paymentStatus === "advance_paid" ||
+        booking.paymentStatus === "paid" ||
+        booking.paymentStatus === "refunded",
+    },
+    { id: "completed", label: "Completed", done: booking.status === "completed" },
+  ];
+  if (booking.status === "cancelled") {
+    return (
+      <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+        This booking was cancelled.
+      </div>
+    );
+  }
+  return (
+    <div className="mt-3 grid gap-2 sm:grid-cols-4">
+      {steps.map((step) => (
+        <div
+          key={step.id}
+          className={`rounded-xl border px-3 py-2 text-xs font-semibold ${
+            step.done
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-emerald-100 bg-white text-slate-500"
+          }`}
+        >
+          {step.label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReviewPrompt({ booking }: { booking: BookingDTO }) {
+  const [open, setOpen] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submitReview() {
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ bookingId: booking.id, rating, comment }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Could not submit review");
+      setMessage("Review submitted.");
+      setOpen(false);
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "Could not submit review");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100"
+      >
+        Review trip
+      </button>
+    );
+  }
+
+  return (
+    <div className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] p-3">
+      <div className="flex flex-wrap gap-2">
+        <select
+          value={rating}
+          onChange={(e) => setRating(Number(e.target.value))}
+          className="rounded-lg border border-emerald-100 bg-white px-3 py-2 text-xs font-semibold"
+        >
+          {[5, 4, 3, 2, 1].map((value) => (
+            <option key={value} value={value}>
+              {value} stars
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => void submitReview()}
+          disabled={submitting || comment.trim().length < 5}
+          className="rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+        >
+          {submitting ? "Submitting..." : "Submit review"}
+        </button>
+      </div>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        rows={3}
+        placeholder="What should future travelers know?"
+        className="mt-2 w-full resize-y rounded-lg border border-emerald-100 bg-white px-3 py-2 text-xs outline-none focus:border-emerald-500"
+      />
+      {message && <p className="mt-2 text-xs text-slate-500">{message}</p>}
     </div>
   );
 }
@@ -462,8 +606,8 @@ function NavItem({
 }) {
   const className = `flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
     active
-      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white"
+      ? "bg-teal-50 text-teal-900 font-semibold"
+      : "text-slate-600 hover:bg-emerald-50 hover:text-slate-900"
   }`;
   const inner = (
     <>
@@ -471,8 +615,8 @@ function NavItem({
         <span
           className={`${
             active
-              ? "text-white"
-              : "text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors"
+              ? "text-teal-900"
+              : "text-slate-400 group-hover:text-teal-700 transition-colors"
           }`}
         >
           {icon}
@@ -483,8 +627,8 @@ function NavItem({
         <span
           className={`px-2 py-0.5 text-xs font-bold rounded-full ${
             active
-              ? "bg-white/20 text-white"
-              : "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400"
+              ? "bg-teal-700/10 text-teal-900"
+              : "bg-emerald-100 text-emerald-800"
           }`}
         >
           {badge}

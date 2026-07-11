@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SiteHeader from "@/components/site-header";
+import { ArrowLeft } from "lucide-react";
 
 export default function SignUp({ next = null }: { next?: string | null }) {
   const router = useRouter();
@@ -42,94 +42,122 @@ export default function SignUp({ next = null }: { next?: string | null }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <SiteHeader backHref="/" backLabel="Home" ctaHref="/tours" ctaLabel="Browse tours" />
-      <div className="mx-auto flex max-w-6xl items-center justify-center px-4 py-10 sm:px-6">
-        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+    <div className="relative min-h-screen flex flex-col justify-between overflow-hidden bg-[linear-gradient(180deg,#f4fbf8_0%,#effaf5_36%,#ffffff_100%)]">
+      {/* Ambient glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.1),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.08),transparent_30%)] -z-10" />
+
+      {/* Floating Transparent Brand Header */}
+      <header className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 flex items-center justify-between z-10">
+        <Link href="/" className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-700 text-base font-bold text-white">
+            EB
+          </span>
+          <div>
+            <p className="text-lg font-semibold tracking-wide text-slate-900">ExploreBD Tours</p>
+            <p className="text-xs text-slate-500">Premium travel across Bangladesh</p>
+          </div>
+        </Link>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-white/85 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-[#f4fbf8] hover:text-slate-900"
+        >
+          <ArrowLeft size={16} />
+          Back to Home
+        </Link>
+      </header>
+
+      {/* Auth Card Container */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6 z-10">
+        <div className="w-full max-w-md rounded-[2.5rem] border border-white bg-white/85 p-8 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl text-slate-900">
           <div className="mb-7">
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 font-[Georgia,Times_New_Roman,serif]">
               Create your account
             </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-sm text-slate-600">
               Sign up to request bookings and track your trips.
             </p>
           </div>
 
-        {error && (
-          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
-            {error}
-          </div>
-        )}
+          {error && (
+            <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              Name
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-              placeholder="Your name"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Name
+              </label>
+              <input
+                type="text"
+                required
+                className="w-full rounded-2xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-[box-shadow,border-color,background-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+                placeholder="Your name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-          </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Email
+              </label>
+              <input
+                type="email"
+                required
+                className="w-full rounded-2xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-[box-shadow,border-color,background-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-              placeholder="Create a strong password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-            />
-          </div>
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                className="w-full rounded-2xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-[box-shadow,border-color,background-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+                placeholder="Create a strong password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition-colors hover:bg-indigo-700 disabled:opacity-60 dark:hover:bg-indigo-500"
-          >
-            {loading ? "Creating account..." : "Sign Up"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-4 w-full rounded-2xl bg-teal-700 py-3.5 text-sm font-semibold text-white shadow-[0_12px_40px_rgba(15,118,110,0.15)] transition hover:-translate-y-0.5 hover:bg-teal-800 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
+            >
+              {loading ? "Creating account..." : "Sign Up"}
+            </button>
+          </form>
 
-        <p className="mt-7 text-center text-sm text-slate-600 dark:text-slate-400">
-          Already have an account?{" "}
-          <Link
-            href={`/signin${next ? `?next=${encodeURIComponent(next)}` : ""}`}
-            className="font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-          >
-            Sign in
-          </Link>
-        </p>
+          <p className="mt-8 text-center text-sm text-slate-600">
+            Already have an account?{" "}
+            <Link
+              href={`/signin${next ? `?next=${encodeURIComponent(next)}` : ""}`}
+              className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors underline decoration-emerald-600/30 underline-offset-4"
+            >
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
-      </div>
+
+      {/* Footer */}
+      <footer className="w-full py-6 text-center text-xs text-slate-400 z-10">
+        &copy; {new Date().getFullYear()} ExploreBD Tours. All rights reserved.
+      </footer>
     </div>
   );
 }

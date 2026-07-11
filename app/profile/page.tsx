@@ -2,11 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AdminDashboard from "@/components/admin-dashboard";
-import UserDashboard from "@/components/user-dashboard";
+import AccountShell from "@/components/account-shell";
+import ProfileForm from "@/components/profile-form";
 import { useAuthUser } from "@/hooks/use-auth-user";
 
-export default function DashboardPage() {
+export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoading } = useAuthUser();
 
@@ -14,20 +14,19 @@ export default function DashboardPage() {
     if (!isLoading && !user) {
       router.push("/signin");
     }
-  }, [user, isLoading, router]);
+  }, [isLoading, router, user]);
 
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4fbf8]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
       </div>
     );
   }
 
-  if (user.role === "admin") {
-    return <AdminDashboard user={user} />;
-  }
-
-  return <UserDashboard user={user} />;
+  return (
+    <AccountShell user={user} title="Edit profile">
+      <ProfileForm />
+    </AccountShell>
+  );
 }
-

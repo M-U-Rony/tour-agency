@@ -25,6 +25,10 @@ export default function BookPackageForm({
   const [travelDate, setTravelDate] = useState("");
   const [travelers, setTravelers] = useState(2);
   const [contactPhone, setContactPhone] = useState("");
+  const [travelerNames, setTravelerNames] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [transactionId, setTransactionId] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(
@@ -59,6 +63,13 @@ export default function BookPackageForm({
           travelDate,
           travelers: Number(travelers),
           contactPhone: contactPhone.trim(),
+          travelerNames: travelerNames
+            .split("\n")
+            .map((name) => name.trim())
+            .filter(Boolean),
+          emergencyContact: emergencyContact.trim(),
+          paymentMethod: paymentMethod.trim(),
+          transactionId: transactionId.trim(),
           notes: notes.trim(),
         }),
       });
@@ -69,6 +80,10 @@ export default function BookPackageForm({
       setTravelDate("");
       setTravelers(2);
       setContactPhone("");
+      setTravelerNames("");
+      setEmergencyContact("");
+      setPaymentMethod("");
+      setTransactionId("");
       setNotes("");
       setMessage({
         type: "ok",
@@ -81,12 +96,11 @@ export default function BookPackageForm({
         text: err instanceof Error ? err.message : "Something went wrong",
       });
     } finally {
-      setSubmitting(false);
     }
   }
 
   const shellClass =
-    "rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950";
+    "rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm";
 
   if (adminPreview) {
     return (
@@ -96,7 +110,7 @@ export default function BookPackageForm({
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               From
             </p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            <p className="text-2xl font-bold text-slate-900">
               {formatBdt(pricePerPerson)}
               <span className="text-sm font-medium text-slate-500"> / person</span>
             </p>
@@ -105,22 +119,22 @@ export default function BookPackageForm({
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Example total (2 guests)
             </p>
-            <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+            <p className="text-xl font-bold text-teal-800">
               {formatBdt(2 * pricePerPerson)}
             </p>
           </div>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          <p className="font-medium text-slate-900 dark:text-white">Admin preview</p>
-          <p className="mt-1 text-slate-600 dark:text-slate-400">
+        <div className="rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-700">
+          <p className="font-medium text-slate-900">Admin preview</p>
+          <p className="mt-1 text-slate-600">
             Customer booking requests are not available on this account. Manage incoming
             requests from the admin bookings area.
           </p>
           <Link
             href="/admin/bookings"
-            className="mt-3 inline-flex text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+            className="mt-3 inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
           >
-            Open bookings →
+            Open bookings
           </Link>
         </div>
       </div>
@@ -134,7 +148,7 @@ export default function BookPackageForm({
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             From
           </p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-slate-900">
             {formatBdt(pricePerPerson)}
             <span className="text-sm font-medium text-slate-500"> / person</span>
           </p>
@@ -143,7 +157,7 @@ export default function BookPackageForm({
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Total
           </p>
-          <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+          <p className="text-xl font-bold text-teal-800">
             {formatBdt(total)}
           </p>
         </div>
@@ -153,8 +167,8 @@ export default function BookPackageForm({
         <div
           className={`mb-4 rounded-lg border px-3 py-2 text-sm font-medium ${
             message.type === "ok"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
-              : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-red-200 bg-red-50 text-red-700"
           }`}
         >
           {message.text}
@@ -170,7 +184,7 @@ export default function BookPackageForm({
             required
             type="date"
             min={minTravelDate}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             value={travelDate}
             onChange={(e) => setTravelDate(e.target.value)}
             onClick={(e) => {
@@ -206,7 +220,7 @@ export default function BookPackageForm({
             min={1}
             max={50}
             step={1}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             value={travelers}
             onChange={(e) => setTravelers(Number(e.target.value))}
           />
@@ -219,7 +233,7 @@ export default function BookPackageForm({
           <input
             required
             type="tel"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             placeholder="+880 17XX XXXXXX"
             value={contactPhone}
             onChange={(e) => setContactPhone(e.target.value)}
@@ -228,11 +242,61 @@ export default function BookPackageForm({
 
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <Users size={14} /> Traveler names
+          </span>
+          <textarea
+            rows={3}
+            className="w-full resize-y rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+            placeholder="One traveler per line"
+            value={travelerNames}
+            onChange={(e) => setTravelerNames(e.target.value)}
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <Phone size={14} /> Emergency contact
+          </span>
+          <input
+            type="tel"
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+            placeholder="Name and phone number"
+            value={emergencyContact}
+            onChange={(e) => setEmergencyContact(e.target.value)}
+          />
+        </label>
+
+        <div className="rounded-xl border border-emerald-100 bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Manual payment reference
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Optional for now. Add bKash, Nagad, bank, or cash reference details if
+            you already paid an advance outside the app.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <input
+              className="rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              placeholder="Method"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            />
+            <input
+              className="rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              placeholder="Transaction/reference ID"
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <label className="block">
+          <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
             <MessageSquare size={14} /> Notes (optional)
           </span>
           <textarea
             rows={3}
-            className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="w-full resize-y rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             placeholder="Any special requirements?"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -242,10 +306,10 @@ export default function BookPackageForm({
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/25 transition-colors hover:bg-indigo-700 disabled:opacity-60 dark:hover:bg-indigo-500"
+          className="w-full rounded-xl bg-teal-700 py-3 text-sm font-semibold text-white shadow-md shadow-teal-900/20 transition-colors hover:bg-teal-800 disabled:opacity-60"
         >
           {submitting
-            ? "Submitting…"
+            ? "Submitting..."
             : isAuthenticated
               ? "Request Booking"
               : "Sign in to book"}

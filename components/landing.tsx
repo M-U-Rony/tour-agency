@@ -145,7 +145,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
   const isLive = !!(topPackages && topPackages.length > 0);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#ecf7ff_0%,#f7fbfd_32%,#ffffff_100%)] text-slate-900">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#f4fbf8_0%,#effaf5_36%,#ffffff_100%)] text-slate-900">
       <section className="relative isolate overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -159,7 +159,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
         <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 pb-16 pt-6 lg:px-10">
           <header className="flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-4 py-3 text-white shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur md:px-6">
             <Link href="/" className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-base font-bold text-sky-800">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-base font-bold text-teal-800">
                 EB
               </span>
               <div>
@@ -181,9 +181,9 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
               <a href="#about" className="transition hover:text-emerald-200">
                 About
               </a>
-              <a href="#contact" className="transition hover:text-emerald-200">
+              <Link href="/contact" className="transition hover:text-emerald-200">
                 Contact
-              </a>
+              </Link>
             </nav>
 
             <div className="hidden items-center gap-3 md:flex">
@@ -204,7 +204,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
               )}
               <Link
                 href="/tours"
-                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-sky-950 shadow-lg shadow-sky-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-100"
+                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-teal-950 shadow-lg shadow-teal-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-100"
               >
                 Book Now
               </Link>
@@ -222,7 +222,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
               <h1 className="mt-6 max-w-3xl font-[Georgia,Times_New_Roman,serif] text-5xl leading-tight font-semibold text-white sm:text-6xl lg:text-7xl">
                 Discover the Beauty of Bangladesh
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-sky-50/88 sm:text-xl">
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-teal-50/88 sm:text-xl">
                 Book unforgettable tours to Cox&apos;s Bazar, Sajek, Sylhet, and Sundarbans with
                 premium planning, trusted guides, and smooth end-to-end travel support.
               </p>
@@ -283,7 +283,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
                 </label>
                 <button
                   type="submit"
-                  className="rounded-2xl bg-sky-900 px-6 py-4 text-sm font-semibold text-white transition hover:bg-sky-800"
+                  className="rounded-2xl bg-teal-700 px-6 py-4 text-sm font-semibold text-white transition hover:bg-teal-800"
                 >
                   Search
                 </button>
@@ -294,7 +294,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
               <div className="rounded-4xl border border-white/20 bg-white/12 p-6 text-white shadow-[0_18px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl">
                 <p className="text-sm uppercase tracking-[0.3em] text-emerald-100">Top Choice</p>
                 <h2 className="mt-3 text-2xl font-semibold">Summer in Sajek Valley</h2>
-                <p className="mt-3 text-sm leading-7 text-sky-50/85">
+                <p className="mt-3 text-sm leading-7 text-teal-50/85">
                   A cloud-side escape with a hill resort, breakfast view deck, and private transfer
                   from Dhaka.
                 </p>
@@ -321,7 +321,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
                     className="rounded-[1.75rem] border border-white/18 bg-white/12 p-5 text-center text-white shadow-[0_18px_50px_rgba(0,0,0,0.14)] backdrop-blur-xl"
                   >
                     <p className="text-3xl font-semibold">{item.value}</p>
-                    <p className="mt-2 text-sm text-sky-50/80">{item.label}</p>
+                    <p className="mt-2 text-sm text-teal-50/80">{item.label}</p>
                   </div>
                 ))}
               </div>
@@ -333,7 +333,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
       <section id="destinations" className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-700">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-teal-700">
               Popular Destinations
             </p>
             <h2 className="mt-4 font-[Georgia,Times_New_Roman,serif] text-4xl font-semibold text-slate-950 sm:text-5xl">
@@ -346,7 +346,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
           </div>
           <Link
             href="/tours"
-            className="inline-flex w-fit items-center rounded-full border border-sky-200 bg-white px-5 py-3 text-sm font-semibold text-sky-900 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"
+            className="inline-flex w-fit items-center rounded-full border border-teal-200 bg-white px-5 py-3 text-sm font-semibold text-teal-900 shadow-sm transition hover:border-teal-300 hover:bg-teal-50"
           >
             View all tours
           </Link>
@@ -367,7 +367,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
                   className="object-cover transition duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
-                <div className="absolute bottom-4 left-4 rounded-full bg-white/88 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-sky-900 uppercase backdrop-blur">
+                <div className="absolute bottom-4 left-4 rounded-full bg-white/88 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-teal-900 uppercase backdrop-blur">
                   Bangladesh
                 </div>
               </div>
@@ -376,7 +376,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
                 <p className="text-sm leading-7 text-slate-600">{destination.description}</p>
                 <Link
                   href={`/tours?location=${encodeURIComponent(destination.name)}`}
-                  className="inline-flex items-center rounded-full bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-900 transition hover:bg-emerald-50 hover:text-emerald-800"
+                  className="inline-flex items-center rounded-full bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900 transition hover:bg-emerald-50 hover:text-emerald-800"
                 >
                   Explore destination
                 </Link>
@@ -446,14 +446,14 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
                   {isLive ? (
                     <Link
                       href={`/tours/${tourPackage.id}`}
-                      className="inline-flex items-center rounded-full bg-sky-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800"
+                      className="inline-flex items-center rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
                     >
                       View Details
                     </Link>
                   ) : (
                     <Link
                       href="/tours"
-                      className="inline-flex items-center rounded-full bg-sky-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800"
+                      className="inline-flex items-center rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
                     >
                       Browse all tours
                     </Link>
@@ -466,14 +466,14 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
       </section>
 
       <section id="about" className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-[0.95fr_1.05fr] lg:px-10">
-        <div className="rounded-4xl bg-sky-950 p-8 text-white shadow-[0_24px_80px_rgba(12,74,110,0.26)] sm:p-10">
+        <div className="rounded-4xl bg-teal-950 p-8 text-white shadow-[0_24px_80px_rgba(15,118,110,0.26)] sm:p-10">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">
             Why Choose Us
           </p>
           <h2 className="mt-4 font-[Georgia,Times_New_Roman,serif] text-4xl font-semibold sm:text-5xl">
             Travel planning that feels premium from the first inquiry
           </h2>
-          <p className="mt-5 text-lg leading-8 text-sky-100/85">
+          <p className="mt-5 text-lg leading-8 text-teal-100/85">
             ExploreBD Tours combines dependable logistics with elevated hospitality for local and
             international travelers discovering Bangladesh.
           </p>
@@ -485,7 +485,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
                 className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-4"
               >
                 <CheckIcon />
-                <span className="text-base font-medium text-sky-50">{reason}</span>
+                <span className="text-base font-medium text-teal-50">{reason}</span>
               </div>
             ))}
           </div>
@@ -493,7 +493,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-4xl bg-white p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-700">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-700">
               Services
             </p>
             <h3 className="mt-4 text-3xl font-semibold text-slate-950">Everything in one place</h3>
@@ -512,7 +512,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
               questions around the clock.
             </p>
           </div>
-          <div className="rounded-4xl bg-slate-50 p-8 shadow-[0_20px_60px_rgba(15,23,42,0.06)] ring-1 ring-slate-200/70">
+          <div className="rounded-4xl bg-[#f4fbf8] p-8 shadow-[0_20px_60px_rgba(15,23,42,0.06)] ring-1 ring-emerald-100/80">
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">
               Safety
             </p>
@@ -523,7 +523,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
             </p>
           </div>
           <div className="rounded-4xl bg-white p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-700">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-teal-700">
               Experience
             </p>
             <h3 className="mt-4 text-3xl font-semibold text-slate-950">Memorable by design</h3>
@@ -537,7 +537,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
 
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
         <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-teal-700">
             Customer Testimonials
           </p>
           <h2 className="mt-4 font-[Georgia,Times_New_Roman,serif] text-4xl font-semibold text-slate-950 sm:text-5xl">
@@ -584,7 +584,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
             <h2 className="mt-4 font-[Georgia,Times_New_Roman,serif] text-4xl font-semibold sm:text-5xl">
               Let ExploreBD Tours design your perfect Bangladesh getaway
             </h2>
-            <p className="mt-5 text-lg leading-8 text-sky-50/88">
+            <p className="mt-5 text-lg leading-8 text-teal-50/88">
               Choose a package or talk to our team for a tailored route with hotel, transport, and
               guide support included.
             </p>
@@ -592,7 +592,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
           <div className="mt-8 lg:mt-0">
             <Link
               href="/tours"
-              className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-semibold text-sky-950 shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-100"
+              className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-semibold text-teal-950 shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-100"
             >
               Book Your Tour Today
             </Link>
@@ -600,7 +600,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
         </div>
       </section>
 
-      <footer id="contact" className="border-t border-slate-200/80 bg-slate-950 text-slate-200">
+      <footer id="contact" className="border-t border-emerald-100/80 bg-teal-950 text-slate-200">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr] lg:px-10">
           <div>
             <h3 className="text-2xl font-semibold text-white">ExploreBD Tours</h3>
@@ -630,6 +630,9 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
               <a href="#about" className="block transition hover:text-white">
                 About
               </a>
+              <Link href="/contact" className="block transition hover:text-white">
+                Custom Trip Request
+              </Link>
             </div>
           </div>
 

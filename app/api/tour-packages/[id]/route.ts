@@ -14,6 +14,15 @@ type LeanPackage = {
   rating: number;
   shortDescription: string;
   imageUrl: string;
+  galleryUrls?: string[];
+  itinerary?: string[];
+  inclusions?: string[];
+  exclusions?: string[];
+  pickupInfo?: string;
+  cancellationPolicy?: string;
+  availableDates?: Date[];
+  maxTravelers?: number;
+  isActive?: boolean;
 };
 
 export async function GET(
@@ -55,7 +64,13 @@ export async function PATCH(
     }
 
     await DbConnect();
-    const doc = await TourPackage.findByIdAndUpdate(id, parsed.data, {
+    const update = {
+      ...parsed.data,
+      ...(parsed.data.availableDates
+        ? { availableDates: parsed.data.availableDates.map((d) => new Date(d)) }
+        : {}),
+    };
+    const doc = await TourPackage.findByIdAndUpdate(id, update, {
       new: true,
     }).lean<LeanPackage | null>();
     if (!doc) {
