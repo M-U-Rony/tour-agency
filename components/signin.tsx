@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useAuthContext } from "@/components/auth-provider";
 
 export default function SignIn({ next = null }: { next?: string | null }) {
   const router = useRouter();
+  const { setUser } = useAuthContext();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,6 +36,7 @@ export default function SignIn({ next = null }: { next?: string | null }) {
       if (!data.user) {
         throw new Error("Invalid response from server");
       }
+      setUser(data.user);
       router.push(nextHref);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to sign in");
