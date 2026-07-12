@@ -1,18 +1,33 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { useAuthContext } from "@/components/auth-provider";
+import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 
 export default function SignIn({ next = null }: { next?: string | null }) {
   const router = useRouter();
-  const { setUser } = useAuthContext();
+  const { user, isLoading, setUser } = useAuthContext();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const nextHref = next && next.startsWith("/") ? next : "/dashboard";
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace(user.role === "admin" ? "/admin/dashboard" : "/dashboard");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f4fbf8]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-700 border-t-transparent" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,25 +65,7 @@ export default function SignIn({ next = null }: { next?: string | null }) {
       {/* Ambient glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.1),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.08),transparent_30%)] -z-10" />
 
-      {/* Floating Transparent Brand Header */}
-      <header className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 flex items-center justify-between z-10">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-700 text-base font-bold text-white">
-            EB
-          </span>
-          <div>
-            <p className="text-lg font-semibold tracking-wide text-slate-900">ExploreBD Tours</p>
-            <p className="text-xs text-slate-500">Premium travel across Bangladesh</p>
-          </div>
-        </Link>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-white/85 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-[#f4fbf8] hover:text-slate-900"
-        >
-          <ArrowLeft size={16} />
-          Back to Home
-        </Link>
-      </header>
+      <SiteHeader backHref="/" backLabel="Back to home" ctaHref="/tours" ctaLabel="Browse tours" />
 
       {/* Auth Card Container */}
       <div className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6 z-10">
@@ -142,10 +139,7 @@ export default function SignIn({ next = null }: { next?: string | null }) {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="w-full py-6 text-center text-xs text-slate-400 z-10">
-        &copy; {new Date().getFullYear()} ExploreBD Tours. All rights reserved.
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useInsideSidebar } from "@/components/sidebar-context";
 import {
   MapPin,
   Users,
@@ -72,6 +74,7 @@ const labelClass =
   "mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500";
 
 export default function CustomTripForm() {
+  const isInsideSidebar = useInsideSidebar();
   const [form, setForm] = useState<FormState>(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -120,12 +123,22 @@ export default function CustomTripForm() {
           Thank you, <strong>{form.name}</strong>. Our team will review your custom trip request and
           reach out to you within 24 hours on <strong>{form.phone || form.email}</strong>.
         </p>
-        <button
-          onClick={() => { setSubmitted(false); setForm(initialForm); }}
-          className="mt-2 rounded-full border border-emerald-100 px-6 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-emerald-50"
-        >
-          Submit another request
-        </button>
+        <div className="flex flex-wrap justify-center gap-3 mt-2">
+          <button
+            onClick={() => { setSubmitted(false); setForm(initialForm); }}
+            className="rounded-full border border-emerald-100 px-6 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-emerald-50 cursor-pointer"
+          >
+            Submit another request
+          </button>
+          {isInsideSidebar && (
+            <Link
+              href="/custom-trips"
+              className="rounded-full bg-teal-700 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-850 cursor-pointer"
+            >
+              View My Custom Trips
+            </Link>
+          )}
+        </div>
       </div>
     );
   }

@@ -7,6 +7,7 @@ import { serializeReview, type ReviewDTO } from "@/lib/review";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import BookPackageForm from "@/components/book-package-form";
 import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +202,7 @@ export default async function TourDetailPage({
           </aside>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

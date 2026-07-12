@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Phone, Users, MessageSquare } from "lucide-react";
+import { CalendarDays, Phone, Users, MessageSquare, CheckCircle } from "lucide-react";
 import { formatBdt } from "@/lib/tour-package";
 import { travelDateInputMinLocal } from "@/lib/booking";
 
@@ -31,6 +31,8 @@ export default function BookPackageForm({
   const [transactionId, setTransactionId] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState<{ id: string; total: number } | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(
     null
   );
@@ -77,6 +79,10 @@ export default function BookPackageForm({
       if (!res.ok) {
         throw new Error(data.message || "Could not create booking");
       }
+      setBookingDetails({
+        id: data.booking?.id || data.booking?._id || "N/A",
+        total: total,
+      });
       setTravelDate("");
       setTravelers(2);
       setContactPhone("");
@@ -85,11 +91,7 @@ export default function BookPackageForm({
       setPaymentMethod("");
       setTransactionId("");
       setNotes("");
-      setMessage({
-        type: "ok",
-        text: "Booking submitted. You can track it in your dashboard.",
-      });
-      setTimeout(() => router.push("/dashboard"), 1200);
+      setSubmitted(true);
     } catch (err: unknown) {
       setMessage({
         type: "err",
@@ -101,6 +103,50 @@ export default function BookPackageForm({
 
   const shellClass =
     "rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm";
+
+  if (submitted && bookingDetails) {
+    return (
+      <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center py-8 gap-4">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+          <CheckCircle className="h-8 w-8 text-emerald-600" />
+        </span>
+        <h3 className="text-xl font-bold text-slate-900 font-[Georgia,Times_New_Roman,serif]">
+          Booking Request Sent!
+        </h3>
+        <div className="w-full bg-[#f4fbf8] rounded-xl border border-emerald-100/50 p-4 text-left text-xs space-y-2.5">
+          <div className="flex justify-between">
+            <span className="text-slate-500 font-medium">Booking ID:</span>
+            <span className="font-semibold text-slate-900 select-all">{bookingDetails.id}</span>
+          </div>
+          <div className="flex justify-between border-t border-emerald-100/30 pt-2">
+            <span className="text-slate-500 font-medium">Total Amount:</span>
+            <span className="font-semibold text-teal-800">{formatBdt(bookingDetails.total)}</span>
+          </div>
+          <div className="flex justify-between border-t border-emerald-100/30 pt-2">
+            <span className="text-slate-500 font-medium">Status:</span>
+            <span className="rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">Pending Review</span>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 leading-normal max-w-[280px]">
+          We are reviewing your request. You can check your booking status inside your dashboard.
+        </p>
+        <div className="flex flex-col gap-2 w-full mt-2">
+          <Link
+            href="/dashboard"
+            className="w-full text-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-800 transition cursor-pointer"
+          >
+            Go to My Bookings
+          </Link>
+          <button
+            onClick={() => setSubmitted(false)}
+            className="w-full text-center rounded-xl border border-slate-100 px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (adminPreview) {
     return (

@@ -1,10 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { CalendarCheck, Plane } from "lucide-react";
-import { useAuthUser } from "@/hooks/use-auth-user";
+import AccountPage from "@/components/account-page";
+import { CalendarCheck } from "lucide-react";
 import type { BookingDTO, BookingStatus, PaymentStatus } from "@/lib/booking";
 import {
   BOOKING_STATUS_LABEL,
@@ -14,14 +12,10 @@ import {
 import { formatBdt } from "@/lib/tour-package";
 
 const STATUS_STYLE: Record<BookingStatus, string> = {
-  pending:
-    "bg-amber-50 text-amber-800 border-amber-200",
-  confirmed:
-    "bg-emerald-50 text-emerald-800 border-emerald-200",
-  cancelled:
-    "bg-red-50 text-red-700 border-red-200",
-  completed:
-    "bg-slate-100 text-slate-700 border-slate-200",
+  pending: "bg-amber-50 text-amber-800 border-amber-200",
+  confirmed: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  cancelled: "bg-red-50 text-red-700 border-red-200",
+  completed: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
 const FILTERS: { id: "all" | BookingStatus; label: string }[] = [
@@ -33,8 +27,6 @@ const FILTERS: { id: "all" | BookingStatus; label: string }[] = [
 ];
 
 export default function AdminBookingsPage() {
-  const router = useRouter();
-  const { user, isLoading: authLoading } = useAuthUser();
   const [bookings, setBookings] = useState<BookingDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | BookingStatus>("all");
@@ -55,16 +47,8 @@ export default function AdminBookingsPage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && !user) router.push("/signin");
-  }, [authLoading, user, router]);
-
-  useEffect(() => {
-    if (!authLoading && user && user.role !== "admin") router.replace("/dashboard");
-  }, [authLoading, user, router]);
-
-  useEffect(() => {
-    if (user?.role === "admin") void loadBookings();
-  }, [user?.role, loadBookings]);
+    void loadBookings();
+  }, [loadBookings]);
 
   const filtered = useMemo(() => {
     if (filter === "all") return bookings;
@@ -102,192 +86,137 @@ export default function AdminBookingsPage() {
     }
   }
 
-  if (authLoading || !user || user.role !== "admin") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f4fbf8]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[#f4fbf8]">
-      <header className="sticky top-0 z-10 border-b border-emerald-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-900">
-              <Plane className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
-                Admin
-              </p>
-              <h1 className="text-lg font-bold text-slate-900">Bookings</h1>
-            </div>
-          </div>
-          <nav className="flex flex-wrap items-center gap-3 text-sm font-medium">
-            <Link
-              href="/admin/dashboard"
-              className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/packages"
-              className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50"
-            >
-              Packages
-            </Link>
-            <Link
-              href="/admin/custom-trips"
-              className="rounded-lg px-3 py-2 text-slate-600 hover:bg-emerald-50"
-            >
-              Custom trips
-            </Link>
-            <span className="rounded-lg bg-teal-50 px-3 py-2 text-teal-800">
-              Bookings
-            </span>
-          </nav>
-        </div>
-      </header>
+    <AccountPage title="Bookings" requireRole="admin" wide>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h2 className="inline-flex items-center gap-2 text-xl font-bold text-slate-900">
+          <CalendarCheck size={20} /> All bookings
+        </h2>
+        <button
+          type="button"
+          onClick={() => void loadBookings()}
+          className="rounded-lg border border-emerald-100 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#f4fbf8]"
+        >
+          Refresh
+        </button>
+      </div>
 
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h2 className="text-xl font-bold text-slate-900 inline-flex items-center gap-2">
-            <CalendarCheck size={20} /> All bookings
-          </h2>
+      <div className="mb-6 flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
           <button
+            key={f.id}
             type="button"
-            onClick={() => void loadBookings()}
-            className="rounded-lg border border-emerald-100 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#f4fbf8]"
+            onClick={() => setFilter(f.id)}
+            className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+              filter === f.id
+                ? "border-teal-200 bg-teal-50 text-teal-900"
+                : "border-emerald-100 bg-white text-slate-700 hover:bg-[#f4fbf8]"
+            }`}
           >
-            Refresh
+            {f.label}
+            {f.id !== "all" && (
+              <span className="ml-1 text-[10px] opacity-70">
+                ({bookings.filter((b) => b.status === f.id).length})
+              </span>
+            )}
           </button>
-        </div>
+        ))}
+      </div>
 
-        <div className="mb-6 flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
-                filter === f.id
-                  ? "border-teal-200 bg-teal-50 text-teal-900"
-                  : "border-emerald-100 bg-white text-slate-700 hover:bg-[#f4fbf8]"
-              }`}
-            >
-              {f.label}
-              {f.id !== "all" && (
-                <span className="ml-1 text-[10px] opacity-70">
-                  ({bookings.filter((b) => b.status === f.id).length})
-                </span>
-              )}
-            </button>
-          ))}
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
         </div>
-
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-emerald-200 bg-white px-6 py-14 text-center text-sm text-slate-500">
-            No bookings to display.
-          </p>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-emerald-100 bg-white shadow-sm">
-            <table className="min-w-full divide-y divide-emerald-100">
-              <thead className="bg-[#f4fbf8]">
-                <tr className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="px-5 py-3">Customer</th>
-                  <th className="px-5 py-3">Package</th>
-                  <th className="px-5 py-3">Travel date</th>
-                  <th className="px-5 py-3">Travelers</th>
-                  <th className="px-5 py-3 text-right">Total</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Payment</th>
-                  <th className="px-5 py-3 text-right">Actions</th>
+      ) : filtered.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-emerald-200 bg-white px-6 py-14 text-center text-sm text-slate-500">
+          No bookings to display.
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-2xl border border-emerald-100 bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-emerald-100">
+            <thead className="bg-[#f4fbf8]">
+              <tr className="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-5 py-3">Customer</th>
+                <th className="px-5 py-3">Package</th>
+                <th className="px-5 py-3">Travel date</th>
+                <th className="px-5 py-3">Travelers</th>
+                <th className="px-5 py-3 text-right">Total</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Payment</th>
+                <th className="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-emerald-100 text-sm">
+              {filtered.map((b) => (
+                <tr key={b.id} className="hover:bg-[#f4fbf8]/60">
+                  <td className="px-5 py-4">
+                    <p className="font-semibold text-slate-900">{b.user?.username ?? "-"}</p>
+                    <p className="text-xs text-slate-500">{b.user?.email ?? ""}</p>
+                    <p className="text-xs text-slate-500">{b.contactPhone}</p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <p className="font-medium text-slate-900">{b.package?.title ?? "-"}</p>
+                    <p className="text-xs text-slate-500">
+                      {b.package?.location} / {b.package?.duration}
+                    </p>
+                  </td>
+                  <td className="px-5 py-4 text-slate-700">{formatTravelDate(b.travelDate)}</td>
+                  <td className="px-5 py-4 text-slate-700">{b.travelers}</td>
+                  <td className="px-5 py-4 text-right font-semibold text-slate-900">
+                    {formatBdt(b.totalPriceBdt)}
+                  </td>
+                  <td className="px-5 py-4">
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLE[b.status]}`}
+                    >
+                      {BOOKING_STATUS_LABEL[b.status]}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <PaymentEditor
+                      booking={b}
+                      disabled={pendingId === b.id}
+                      onSave={(payload) => void updateBooking(b.id, payload)}
+                    />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      {b.status === "pending" && (
+                        <ActionButton
+                          disabled={pendingId === b.id}
+                          tone="confirm"
+                          onClick={() => void setStatus(b.id, "confirmed")}
+                        >
+                          Confirm
+                        </ActionButton>
+                      )}
+                      {b.status === "confirmed" && (
+                        <ActionButton
+                          disabled={pendingId === b.id}
+                          tone="complete"
+                          onClick={() => void setStatus(b.id, "completed")}
+                        >
+                          Mark completed
+                        </ActionButton>
+                      )}
+                      {(b.status === "pending" || b.status === "confirmed") && (
+                        <ActionButton
+                          disabled={pendingId === b.id}
+                          tone="cancel"
+                          onClick={() => void setStatus(b.id, "cancelled")}
+                        >
+                          Cancel
+                        </ActionButton>
+                      )}
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-emerald-100 text-sm">
-                {filtered.map((b) => (
-                  <tr key={b.id} className="hover:bg-[#f4fbf8]/60">
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-900">
-                        {b.user?.username ?? "-"}
-                      </p>
-                      <p className="text-xs text-slate-500">{b.user?.email ?? ""}</p>
-                      <p className="text-xs text-slate-500">{b.contactPhone}</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className="font-medium text-slate-900">
-                        {b.package?.title ?? "-"}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {b.package?.location} / {b.package?.duration}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4 text-slate-700">
-                      {formatTravelDate(b.travelDate)}
-                    </td>
-                    <td className="px-5 py-4 text-slate-700">{b.travelers}</td>
-                    <td className="px-5 py-4 text-right font-semibold text-slate-900">
-                      {formatBdt(b.totalPriceBdt)}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLE[b.status]}`}
-                      >
-                        {BOOKING_STATUS_LABEL[b.status]}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <PaymentEditor
-                        booking={b}
-                        disabled={pendingId === b.id}
-                        onSave={(payload) => void updateBooking(b.id, payload)}
-                      />
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex flex-wrap justify-end gap-1.5">
-                        {b.status === "pending" && (
-                          <ActionButton
-                            disabled={pendingId === b.id}
-                            tone="confirm"
-                            onClick={() => void setStatus(b.id, "confirmed")}
-                          >
-                            Confirm
-                          </ActionButton>
-                        )}
-                        {b.status === "confirmed" && (
-                          <ActionButton
-                            disabled={pendingId === b.id}
-                            tone="complete"
-                            onClick={() => void setStatus(b.id, "completed")}
-                          >
-                            Mark completed
-                          </ActionButton>
-                        )}
-                        {(b.status === "pending" || b.status === "confirmed") && (
-                          <ActionButton
-                            disabled={pendingId === b.id}
-                            tone="cancel"
-                            onClick={() => void setStatus(b.id, "cancelled")}
-                          >
-                            Cancel
-                          </ActionButton>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </main>
-    </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </AccountPage>
   );
 }
 

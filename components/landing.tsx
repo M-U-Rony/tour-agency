@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import LandingNav from "@/components/landing-nav";
 import type { TourPackageDTO } from "@/lib/tour-package";
 import { formatBdt } from "@/lib/tour-package";
 import type { AuthUser } from "@/lib/auth-user";
@@ -157,59 +158,7 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(52,211,153,0.18),transparent_25%)]" />
 
         <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 pb-16 pt-6 lg:px-10">
-          <header className="flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-4 py-3 text-white shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur md:px-6">
-            <Link href="/" className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-base font-bold text-teal-800">
-                EB
-              </span>
-              <div>
-                <p className="text-lg font-semibold tracking-wide">ExploreBD Tours</p>
-                <p className="text-xs text-white/70">Premium travel across Bangladesh</p>
-              </div>
-            </Link>
-
-            <nav className="hidden items-center gap-7 text-sm font-medium lg:flex">
-              <a href="#home" className="transition hover:text-emerald-200">
-                Home
-              </a>
-              <a href="#packages" className="transition hover:text-emerald-200">
-                Packages
-              </a>
-              <a href="#destinations" className="transition hover:text-emerald-200">
-                Destinations
-              </a>
-              <a href="#about" className="transition hover:text-emerald-200">
-                About
-              </a>
-              <Link href="/contact" className="transition hover:text-emerald-200">
-                Contact
-              </Link>
-            </nav>
-
-            <div className="hidden items-center gap-3 md:flex">
-              {user ? (
-                <Link
-                  href={user.role === "admin" ? "/admin/dashboard" : "/dashboard"}
-                  className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-                >
-                  Hi, {user.username.split(/\s+/)[0]}
-                </Link>
-              ) : (
-                <Link
-                  href="/signin"
-                  className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-                >
-                  Login / Sign Up
-                </Link>
-              )}
-              <Link
-                href="/tours"
-                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-teal-950 shadow-lg shadow-teal-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-100"
-              >
-                Book Now
-              </Link>
-            </div>
-          </header>
+          <LandingNav user={user} />
 
           <div
             id="home"

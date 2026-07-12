@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/user", "/admin"];
+const PROTECTED_PREFIXES = ["/dashboard", "/user", "/admin", "/profile", "/custom-trips"];
 const ADMIN_PREFIXES = ["/admin"];
 
 function pathMatches(pathname: string, prefixes: string[]): boolean {
@@ -35,7 +35,7 @@ async function verifyToken(token: string | undefined) {
   }
 }
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   if (!pathMatches(pathname, PROTECTED_PREFIXES)) {
@@ -63,5 +63,11 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/user/:path*", "/admin/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/user/:path*",
+    "/admin/:path*",
+    "/profile/:path*",
+    "/custom-trips/:path*",
+  ],
 };

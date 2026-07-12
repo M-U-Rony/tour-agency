@@ -3,10 +3,6 @@ import { randomBytes } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { getAuthFromCookies } from "@/lib/auth-api";
-import {
-  isCloudinaryConfigured,
-  uploadPackageImageToCloudinary,
-} from "@/lib/cloudinary";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = new Map<string, string>([
@@ -46,22 +42,13 @@ export async function POST(req: Request) {
 
     const buf = Buffer.from(await file.arrayBuffer());
     const name = `${Date.now()}-${randomBytes(8).toString("hex")}${ext}`;
-    if (isCloudinaryConfigured()) {
-      const uploaded = await uploadPackageImageToCloudinary({
-        buffer: buf,
-        mimeType: file.type,
-        filenameHint: name,
-      });
-      return NextResponse.json({ url: uploaded.url });
-    }
 
-    // Local fallback (works only on the machine/server that stores the file)
-    const dir = join(process.cwd(), "public", "uploads", "packages");
+    const dir = join(process.cwd(), "upload");
     await mkdir(dir, { recursive: true });
     const fullPath = join(dir, name);
     await writeFile(fullPath, buf);
 
-    return NextResponse.json({ url: `/uploads/packages/${name}` });
+    return NextResponse.json({ url: `/upload/${name}` });
   } catch (error) {
     console.error("POST upload/package-image:", error);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });

@@ -41,5 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 # locally uploaded package images (keep folder via .gitkeep)
-/public/uploads/packages/*
-!/public/uploads/packages/.gitkeep
+/upload/*
+!/upload/.gitkeep

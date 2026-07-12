@@ -3,6 +3,7 @@ import { DbConnect } from "@/db/connection";
 import { TourPackage } from "@/db/models";
 import PackageCard from "@/components/package-card";
 import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 import type { TourPackageDTO } from "@/lib/tour-package";
 import { serializeTourPackage } from "@/lib/tour-package";
 import { getAuthFromCookies } from "@/lib/auth-api";
@@ -100,20 +101,20 @@ export default async function ToursPage({
         </div>
 
         <form
-          className="mb-8 grid gap-3 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_0.8fr_0.8fr_0.8fr_auto]"
+          className="mb-8 grid gap-3 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[1fr_1fr_0.8fr_0.8fr_0.8fr_auto]"
           action="/tours"
         >
           <input
             name="location"
             defaultValue={location}
             placeholder="Destination"
-            className="rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+            className="min-w-0 rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
           />
           <input
             name="duration"
             defaultValue={duration}
             placeholder="Duration"
-            className="rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+            className="min-w-0 rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
           />
           <input
             name="minPrice"
@@ -121,7 +122,7 @@ export default async function ToursPage({
             type="number"
             min={0}
             placeholder="Min price"
-            className="rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+            className="min-w-0 rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
           />
           <input
             name="maxPrice"
@@ -129,19 +130,19 @@ export default async function ToursPage({
             type="number"
             min={0}
             placeholder="Max price"
-            className="rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+            className="min-w-0 rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
           />
           <select
             name="sort"
             defaultValue={sort}
-            className="rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+            className="min-w-0 rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
           >
             <option value="newest">Newest</option>
             <option value="rating">Top rated</option>
             <option value="price-low">Price low</option>
             <option value="price-high">Price high</option>
           </select>
-          <button className="rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800">
+          <button className="rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 shrink-0">
             Search
           </button>
         </form>
@@ -172,6 +173,7 @@ export default async function ToursPage({
           </div>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 }

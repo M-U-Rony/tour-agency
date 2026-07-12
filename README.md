@@ -18,16 +18,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Package images (important)
 
-When you create a tour package, the image upload endpoint can work in two modes:
-
-- **Cloudinary (recommended)**: images are uploaded to Cloudinary and stored as a public URL in MongoDB, so everyone can see them after you push/deploy.
-- **Local fallback**: images are saved under `public/uploads/packages/` on the current machine. This is **not shared** via GitHub, so other PCs won’t see those images unless they exist on their machine/server.
-
-To enable Cloudinary, add these environment variables:
-
-- `CLOUDINARY_CLOUD_NAME`
-- `CLOUDINARY_API_KEY`
-- `CLOUDINARY_API_SECRET`
+When you create a tour package, the image upload endpoint saves the uploaded image locally inside the `/upload` folder at the root of the project.
+These images are served dynamically via the `/upload/[filename]` route. Since this folder is ignored by Git, the uploaded files remain local to the environment.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

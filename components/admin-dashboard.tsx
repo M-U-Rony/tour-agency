@@ -2,45 +2,21 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { MapPin, TrendingUp } from "lucide-react";
 import type { AuthUser } from "@/lib/auth-user";
-import { clientSignOut } from "@/lib/client-auth";
-import {
-  LayoutDashboard,
-  Map as MapIcon,
-  CalendarCheck,
-  ClipboardList,
-  LogOut,
-  Bell,
-  TrendingUp,
-  MapPin,
-  Menu,
-  X,
-  ChevronDown,
-  User,
-} from "lucide-react";
 import type { BookingDTO, BookingStatus } from "@/lib/booking";
-import { BOOKING_STATUS_LABEL, formatTravelDate } from "@/lib/booking";
+import { BOOKING_STATUS_LABEL } from "@/lib/booking";
 import { formatBdt, type TourPackageDTO } from "@/lib/tour-package";
-import { getUserAvatarUrl } from "@/lib/user-avatar";
+import AccountShell from "@/components/account-shell";
 
 const STATUS_STYLE: Record<BookingStatus, string> = {
-  pending:
-    "bg-amber-50 text-amber-700 border-amber-200",
-  confirmed:
-    "bg-emerald-50 text-emerald-700 border-emerald-200",
-  cancelled:
-    "bg-red-50 text-red-700 border-red-200",
-  completed:
-    "bg-slate-100 text-slate-700 border-slate-200",
+  pending: "bg-amber-50 text-amber-700 border-amber-200",
+  confirmed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  cancelled: "bg-red-50 text-red-700 border-red-200",
+  completed: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
 export default function AdminDashboard({ user }: { user: AuthUser }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const avatarSrc = getUserAvatarUrl(user);
-
   const [bookings, setBookings] = useState<BookingDTO[]>([]);
   const [packages, setPackages] = useState<TourPackageDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,315 +85,140 @@ export default function AdminDashboard({ user }: { user: AuthUser }) {
   }, [bookings]);
 
   return (
-    <div className="flex h-screen bg-[#f4fbf8] text-slate-900 font-sans overflow-hidden">
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden backdrop-blur-sm transition-opacity"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-emerald-100 transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          <div className="h-16 flex items-center px-6 border-b border-emerald-100">
-            <div className="flex items-center gap-2 text-teal-700 font-bold text-xl tracking-tight">
-              <MapPin className="w-6 h-6" />
-              <span>ExploreBD Admin</span>
-            </div>
-            <button
-              className="ml-auto lg:hidden text-slate-500"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            <NavItem
-              icon={<LayoutDashboard size={20} />}
-              label="Dashboard"
-              href="/admin/dashboard"
-              active
-            />
-            <NavItem
-              icon={<MapIcon size={20} />}
-              label="Tours & Packages"
-              href="/admin/packages"
-            />
-            <NavItem
-              icon={<CalendarCheck size={20} />}
-              label="Bookings"
-              href="/admin/bookings"
-              badge={
-                stats.activeBookings > 0 ? String(stats.activeBookings) : undefined
-              }
-            />
-            <NavItem
-              icon={<ClipboardList size={20} />}
-              label="Custom Trips"
-              href="/admin/custom-trips"
-            />
-            <div className="mt-3 px-4 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-400 border-t border-emerald-100">
-              Profile
-            </div>
-            <NavItem
-              icon={<User size={20} />}
-              label="Edit profile"
-              href="/profile"
-              active={pathname === "/profile"}
-            />
-          </nav>
-
-          <div className="p-4 border-t border-emerald-100">
-            <button
-              type="button"
-              className="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-              onClick={() => void clientSignOut(router)}
-            >
-              <LogOut size={20} />
-              <span>Logout</span>
-            </button>
-          </div>
+    <AccountShell user={user} title="Admin Dashboard">
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
+          <p className="text-slate-500 mt-1">
+            Live data from your bookings and packages.
+          </p>
         </div>
-      </aside>
 
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <header className="h-16 flex items-center justify-between px-6 bg-white/90 backdrop-blur-md border-b border-emerald-100 z-10 sticky top-0">
-          <div className="flex items-center gap-4">
-            <button
-              className="lg:hidden text-slate-500 hover:text-slate-900"
-              onClick={() => setIsSidebarOpen(true)}
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <h1 className="text-lg font-semibold tracking-tight hidden sm:block">
-              Admin overview
-            </h1>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard
+            title="Total Revenue"
+            value={loading ? "—" : formatBdt(stats.totalRevenue)}
+            helper="Confirmed + completed bookings"
+          />
+          <MetricCard
+            title="Active Bookings"
+            value={loading ? "—" : String(stats.activeBookings)}
+            helper="Pending + confirmed"
+          />
+          <MetricCard
+            title="Total Tours"
+            value={loading ? "—" : String(stats.totalTours)}
+            helper="Live packages"
+          />
+          <MetricCard
+            title="Customers"
+            value={loading ? "—" : String(stats.customers)}
+            helper="Unique booking accounts"
+          />
+        </div>
 
-          <div className="flex items-center gap-4">
-            <button className="relative p-2 text-slate-500 hover:text-slate-900 transition-colors rounded-full hover:bg-emerald-50">
-              <Bell className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-3 cursor-pointer pl-2 hover:opacity-80 transition-opacity">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={avatarSrc}
-                alt=""
-                className="w-9 h-9 rounded-full object-cover border-2 border-emerald-100 shadow-sm"
-              />
-              <div className="hidden md:block text-sm">
-                <p className="font-medium">{user.username}</p>
-                <p className="text-xs text-slate-500">Administrator</p>
-              </div>
-              <ChevronDown className="w-4 h-4 text-slate-400 hidden md:block" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-emerald-100 flex justify-between items-center bg-[#f4fbf8]/50">
+              <h2 className="font-semibold text-lg">Recent bookings</h2>
+              <Link
+                href="/admin/bookings"
+                className="text-sm font-semibold text-teal-700 hover:text-teal-800 transition-colors"
+              >
+                View all
+              </Link>
             </div>
-          </div>
-        </header>
-
-        <div className="flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
-          <div className="max-w-7xl mx-auto space-y-8">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
-              <p className="text-slate-500 mt-1">
-                Live data from your bookings and packages.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <MetricCard
-                title="Total Revenue"
-                value={loading ? "—" : formatBdt(stats.totalRevenue)}
-                helper="Confirmed + completed bookings"
-              />
-              <MetricCard
-                title="Active Bookings"
-                value={loading ? "—" : String(stats.activeBookings)}
-                helper="Pending + confirmed"
-              />
-              <MetricCard
-                title="Total Tours"
-                value={loading ? "—" : String(stats.totalTours)}
-                helper="Live packages"
-              />
-              <MetricCard
-                title="Customers"
-                value={loading ? "—" : String(stats.customers)}
-                helper="Unique booking accounts"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden flex flex-col">
-                <div className="p-6 border-b border-emerald-100 flex justify-between items-center bg-[#f4fbf8]/50">
-                  <h2 className="font-semibold text-lg">Recent bookings</h2>
-                  <Link
-                    href="/admin/bookings"
-                    className="text-sm font-medium text-teal-700 hover:text-teal-800"
-                  >
-                    View all
-                  </Link>
+            <div className="flex-1 overflow-x-auto">
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
                 </div>
-                <div className="overflow-x-auto">
-                  {loading ? (
-                    <div className="flex justify-center py-12">
-                      <div className="h-7 w-7 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-                    </div>
-                  ) : recent.length === 0 ? (
-                    <p className="py-12 text-center text-sm text-slate-500">
-                      No bookings yet.
-                    </p>
-                  ) : (
-                    <table className="w-full text-sm text-left">
-                      <thead className="text-xs text-slate-500 uppercase bg-[#f4fbf8] border-b border-emerald-100">
-                        <tr>
-                          <th className="px-6 py-4 font-medium">Customer</th>
-                          <th className="px-6 py-4 font-medium">Package</th>
-                          <th className="px-6 py-4 font-medium">Date</th>
-                          <th className="px-6 py-4 font-medium">Status</th>
-                          <th className="px-6 py-4 font-medium text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-emerald-100">
-                        {recent.map((b) => (
-                          <tr
-                            key={b.id}
-                            className="hover:bg-[#f4fbf8] transition-colors"
+              ) : recent.length === 0 ? (
+                <p className="text-center py-12 text-sm text-slate-500">No bookings yet.</p>
+              ) : (
+                <table className="w-full text-left text-sm text-slate-600 border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/75 border-b border-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      <th className="px-6 py-3 font-semibold">User</th>
+                      <th className="px-6 py-3 font-semibold">Tour</th>
+                      <th className="px-6 py-3 font-semibold">Status</th>
+                      <th className="px-6 py-3 font-semibold text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {recent.map((b) => (
+                      <tr key={b.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="font-semibold text-slate-900">{b.user?.username || "Traveler"}</p>
+                          <p className="text-xs text-slate-400">{b.user?.email || "—"}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-medium text-slate-900 line-clamp-1">
+                            {b.package?.title || "—"}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {b.travelers} traveler{b.travelers === 1 ? "" : "s"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[b.status]}`}
                           >
-                            <td className="px-6 py-4">
-                              <p className="font-medium">{b.user?.username ?? "—"}</p>
-                              <p className="text-xs text-slate-500">{b.user?.email ?? ""}</p>
-                            </td>
-                            <td className="px-6 py-4 text-slate-700">
-                              {b.package?.title ?? "—"}
-                            </td>
-                            <td className="px-6 py-4 text-slate-500">
-                              {formatTravelDate(b.travelDate)}
-                            </td>
-                            <td className="px-6 py-4">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[b.status]}`}
-                              >
-                                {BOOKING_STATUS_LABEL[b.status]}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right font-medium">
-                              {formatBdt(b.totalPriceBdt)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
+                            {BOOKING_STATUS_LABEL[b.status]}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right font-medium text-slate-900">
+                          {formatBdt(b.totalPriceBdt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
 
-              <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm flex flex-col">
-                <div className="p-6 border-b border-emerald-100 flex justify-between items-center bg-[#f4fbf8]/50">
-                  <h2 className="font-semibold text-lg">Top destinations</h2>
+          <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm flex flex-col">
+            <div className="p-6 border-b border-emerald-100 flex justify-between items-center bg-[#f4fbf8]/50">
+              <h2 className="font-semibold text-lg">Top destinations</h2>
+            </div>
+            <div className="p-6 space-y-4 flex-1">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
                 </div>
-                <div className="p-6 space-y-4 flex-1">
-                  {loading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-                    </div>
-                  ) : topDestinations.length === 0 ? (
-                    <p className="text-sm text-slate-500">No destinations yet.</p>
-                  ) : (
-                    topDestinations.map((dest) => (
-                      <div key={dest.name} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                            <MapPin size={18} />
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{dest.name}</p>
-                            <p className="text-xs text-slate-500">
-                              {dest.bookings} booking{dest.bookings === 1 ? "" : "s"}
-                            </p>
-                          </div>
-                        </div>
+              ) : topDestinations.length === 0 ? (
+                <p className="text-sm text-slate-500">No destinations yet.</p>
+              ) : (
+                topDestinations.map((dest) => (
+                  <div key={dest.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                        <MapPin size={18} />
                       </div>
-                    ))
-                  )}
-                </div>
-                <div className="mt-auto p-4 border-t border-emerald-100">
-                  <Link
-                    href="/admin/packages"
-                    className="block w-full py-2 text-center text-sm font-medium text-teal-700 hover:bg-[#f4fbf8] rounded-lg transition-colors"
-                  >
-                    Manage packages
-                  </Link>
-                </div>
-              </div>
+                      <div>
+                        <p className="font-medium text-sm">{dest.name}</p>
+                        <p className="text-xs text-slate-500">
+                          {dest.bookings} booking{dest.bookings === 1 ? "" : "s"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="mt-auto p-4 border-t border-emerald-100">
+              <Link
+                href="/admin/packages"
+                className="block w-full py-2 text-center text-sm font-medium text-teal-700 hover:bg-[#f4fbf8] rounded-lg transition-colors"
+              >
+                Manage packages
+              </Link>
             </div>
           </div>
         </div>
-      </main>
-    </div>
-  );
-}
-
-function NavItem({
-  icon,
-  label,
-  active,
-  badge,
-  href,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-  badge?: string;
-  href?: string;
-}) {
-  const className = `flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
-    active
-      ? "bg-teal-50 text-teal-900 font-semibold"
-      : "text-slate-600 hover:bg-emerald-50 hover:text-slate-900"
-  }`;
-  const content = (
-    <>
-      <div className="flex items-center gap-3 font-medium text-sm">
-        <span
-          className={`${
-            active
-              ? "text-teal-900"
-              : "text-slate-400 group-hover:text-teal-700 transition-colors"
-          }`}
-        >
-          {icon}
-        </span>
-        {label}
       </div>
-      {badge && (
-        <span
-          className={`px-2 py-0.5 text-xs font-bold rounded-full ${
-            active
-              ? "bg-teal-700/10 text-teal-900"
-              : "bg-emerald-100 text-emerald-800"
-          }`}
-        >
-          {badge}
-        </span>
-      )}
-    </>
-  );
-  if (href) {
-    return (
-      <Link href={href} className={className}>
-        {content}
-      </Link>
-    );
-  }
-  return (
-    <a href="#" className={className}>
-      {content}
-    </a>
+    </AccountShell>
   );
 }
 

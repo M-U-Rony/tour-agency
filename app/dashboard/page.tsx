@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminDashboard from "@/components/admin-dashboard";
 import UserDashboard from "@/components/user-dashboard";
+import LoadingSpinner from "@/components/loading-spinner";
 import { useAuthUser } from "@/hooks/use-auth-user";
 
 export default function DashboardPage() {
@@ -17,11 +18,7 @@ export default function DashboardPage() {
   }, [user, isLoading, router]);
 
   if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4fbf8]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-700" />
-      </div>
-    );
+    return <LoadingSpinner fullScreen />;
   }
 
   if (user.role === "admin") {
@@ -30,4 +27,3 @@ export default function DashboardPage() {
 
   return <UserDashboard user={user} />;
 }
-

@@ -5,6 +5,7 @@ import { serializeTourPackage, type TourPackageDTO } from "@/lib/tour-package";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import { User } from "@/db/models";
 import { toAuthUser, type AuthUser } from "@/lib/auth-user";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,10 @@ export default async function Home() {
     }
   } catch {
     currentUser = null;
+  }
+
+  if (currentUser) {
+    redirect(currentUser.role === "admin" ? "/admin/dashboard" : "/dashboard");
   }
 
   return <Landing topPackages={topPackages} currentUser={currentUser} />;
