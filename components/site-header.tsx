@@ -94,9 +94,8 @@ export default function SiteHeader({
           ) : null}
 
           <Link href="/" className="flex min-w-0 items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700 text-sm font-extrabold text-white shadow-sm shadow-teal-900/25">
-              EB
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="ExploreBD" className="h-9 w-auto object-contain" />
             <span className="truncate text-sm font-extrabold tracking-tight text-slate-900 sm:text-base">
               ExploreBD
             </span>

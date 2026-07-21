@@ -74,9 +74,8 @@ export default function AdminSignIn({ next = null }: { next?: string | null }) {
       {/* Top Header */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-sm font-extrabold text-white shadow-lg shadow-teal-500/20">
-            EB
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="ExploreBD" className="h-9 w-auto object-contain" />
           <span className="text-base font-extrabold tracking-tight text-white">
             ExploreBD
           </span>

@@ -28,9 +28,8 @@ export default function LandingNav({ user }: { user: AuthUser | null }) {
     <header className="relative z-20">
       <div className="flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-4 py-3 text-white shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur md:px-6">
         <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-base font-bold text-teal-800">
-            EB
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="ExploreBD" className="h-10 w-auto object-contain" />
           <div>
             <p className="text-lg font-semibold tracking-wide">ExploreBD</p>
             <p className="hidden text-xs text-white/70 sm:block">

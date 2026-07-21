@@ -51,9 +51,8 @@ export default function SiteFooter() {
           {/* Brand Column */}
           <div className="md:col-span-2 space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-sm font-extrabold text-white shadow-md shadow-teal-500/10">
-                EB
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="ExploreBD" className="h-9 w-auto object-contain" />
               <span className="text-base font-extrabold tracking-tight text-white">
                 ExploreBD
               </span>
