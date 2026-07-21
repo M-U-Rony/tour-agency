@@ -96,6 +96,11 @@ export default function SiteFooter() {
                   Account Login
                 </Link>
               </li>
+              <li>
+                <Link href="/admin/signin" className="hover:text-teal-400 transition-colors duration-200">
+                  Admin Portal
+                </Link>
+              </li>
             </ul>
           </div>
 

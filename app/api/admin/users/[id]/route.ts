@@ -25,25 +25,28 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
     const { name, email, password, role, profileImage, profilePage } = parsed.data;
 
+    const updates: Parameters<typeof User.update>[1] = {};
+
     if (email && email !== user.email) {
       const existing = await User.findOne({ email });
       if (existing) return NextResponse.json({ message: "Email already in use" }, { status: 409 });
-      user.email = email;
+      updates.email = email;
     }
-    if (name) user.name = name;
-    if (role) user.role = role;
+    if (name) updates.name = name;
+    if (role) updates.role = role;
     if (password) {
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
+      updates.password = await bcrypt.hash(password, salt);
     }
 
-    // Admins can also upload/assign a profile image and profile PDF.
-    if (typeof profileImage === "string") user.profileImage = profileImage;
-    if (typeof profilePage === "string") user.profilePage = profilePage;
+    if (typeof profileImage === "string") updates.profileImage = profileImage;
+    if (typeof profilePage === "string") updates.profilePage = profilePage;
 
-    await user.save();
-    const saved = await User.findById(userId).select("-password").lean();
-    return NextResponse.json({ user: saved });
+    const saved = await User.update(userId, updates);
+    if (!saved) return NextResponse.json({ message: "User not found" }, { status: 404 });
+
+    const { password: _, ...userWithoutPassword } = saved;
+    return NextResponse.json({ user: userWithoutPassword });
   } catch (err) {
     console.error("Admin update user error:", err);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });

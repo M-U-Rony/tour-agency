@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/user", "/admin", "/profile", "/custom-trips"];
+const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/signin"];
 const ADMIN_PREFIXES = ["/admin"];
 
 function pathMatches(pathname: string, prefixes: string[]): boolean {
@@ -37,6 +38,19 @@ async function verifyToken(token: string | undefined) {
 
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+
+  // Allow public admin auth pages without protection
+  if (PUBLIC_ADMIN_ROUTES.includes(pathname)) {
+    const token = req.cookies.get("token")?.value;
+    const auth = await verifyToken(token);
+    if (auth?.role === "admin") {
+      const url = req.nextUrl.clone();
+      url.pathname = "/admin/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
 
   if (!pathMatches(pathname, PROTECTED_PREFIXES)) {
     return NextResponse.next();

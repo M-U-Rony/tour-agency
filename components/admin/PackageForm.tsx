@@ -168,7 +168,14 @@ export default function PackageForm({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || "Could not save package");
+        let errMsg = data.message || "Could not save package";
+        if (data.issues?.fieldErrors) {
+          const details = Object.entries(data.issues.fieldErrors)
+            .map(([field, errors]: any) => `${field}: ${Array.isArray(errors) ? errors.join(", ") : errors}`)
+            .join("; ");
+          if (details) errMsg += `: ${details}`;
+        }
+        throw new Error(errMsg);
       }
       onSuccess();
     } catch (err: unknown) {

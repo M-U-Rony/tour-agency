@@ -5,26 +5,6 @@ import { updateTourPackageSchema } from "@/utils/zod/types";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import { serializeTourPackage } from "@/lib/tour-package";
 
-type LeanPackage = {
-  _id: unknown;
-  title: string;
-  location: string;
-  duration: string;
-  priceBdt: number;
-  rating: number;
-  shortDescription: string;
-  imageUrl: string;
-  galleryUrls?: string[];
-  itinerary?: string[];
-  inclusions?: string[];
-  exclusions?: string[];
-  pickupInfo?: string;
-  cancellationPolicy?: string;
-  availableDates?: Date[];
-  maxTravelers?: number;
-  isActive?: boolean;
-};
-
 export async function GET(
   _req: Request,
   ctx: { params: Promise<{ id: string }> }
@@ -32,7 +12,7 @@ export async function GET(
   try {
     const { id } = await ctx.params;
     await DbConnect();
-    const doc = await TourPackage.findById(id).lean<LeanPackage | null>();
+    const doc = await TourPackage.findById(id);
     if (!doc) {
       return NextResponse.json({ message: "Package not found" }, { status: 404 });
     }
@@ -67,12 +47,14 @@ export async function PATCH(
     const update = {
       ...parsed.data,
       ...(parsed.data.availableDates
-        ? { availableDates: parsed.data.availableDates.map((d) => new Date(d)) }
+        ? {
+            availableDates: parsed.data.availableDates
+              .map((d) => new Date(d))
+              .filter((d) => !Number.isNaN(d.getTime())),
+          }
         : {}),
     };
-    const doc = await TourPackage.findByIdAndUpdate(id, update, {
-      new: true,
-    }).lean<LeanPackage | null>();
+    const doc = await TourPackage.findByIdAndUpdate(id, update);
     if (!doc) {
       return NextResponse.json({ message: "Package not found" }, { status: 404 });
     }
@@ -94,7 +76,7 @@ export async function DELETE(
     }
     const { id } = await ctx.params;
     await DbConnect();
-    const removed = await TourPackage.findByIdAndDelete(id).lean<LeanPackage | null>();
+    const removed = await TourPackage.findByIdAndDelete(id);
     if (!removed) {
       return NextResponse.json({ message: "Package not found" }, { status: 404 });
     }

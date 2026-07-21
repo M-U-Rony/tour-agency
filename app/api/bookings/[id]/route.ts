@@ -3,39 +3,7 @@ import { DbConnect } from "@/db/connection";
 import { Booking, TourPackage } from "@/db/models";
 import { updateBookingStatusSchema } from "@/utils/zod/types";
 import { getAuthFromCookies } from "@/lib/auth-api";
-import {
-  serializeBooking,
-  type BookingStatus,
-  type PaymentStatus,
-} from "@/lib/booking";
-
-type LeanPackage = {
-  _id: unknown;
-  title: string;
-  location: string;
-  duration: string;
-  imageUrl: string;
-  priceBdt: number;
-};
-
-type LeanBooking = {
-  _id: unknown;
-  userId: unknown;
-  packageId: unknown;
-  travelDate: Date;
-  travelers: number;
-  contactPhone: string;
-  notes?: string;
-  travelerNames?: string[];
-  emergencyContact?: string;
-  status: BookingStatus;
-  paymentStatus?: PaymentStatus;
-  paymentMethod?: string;
-  transactionId?: string;
-  adminNotes?: string;
-  totalPriceBdt: number;
-  createdAt: Date;
-};
+import { serializeBooking } from "@/lib/booking";
 
 export async function PATCH(
   req: Request,
@@ -84,28 +52,30 @@ export async function PATCH(
       }
     }
 
+    const updates: Parameters<typeof Booking.findByIdAndUpdate>[1] = {};
     if (isAdmin) {
-      if (parsed.data.status) booking.status = parsed.data.status;
-      if (parsed.data.paymentStatus) booking.paymentStatus = parsed.data.paymentStatus;
+      if (parsed.data.status) updates.status = parsed.data.status;
+      if (parsed.data.paymentStatus) updates.paymentStatus = parsed.data.paymentStatus;
       if (parsed.data.paymentMethod !== undefined) {
-        booking.paymentMethod = parsed.data.paymentMethod;
+        updates.paymentMethod = parsed.data.paymentMethod;
       }
       if (parsed.data.transactionId !== undefined) {
-        booking.transactionId = parsed.data.transactionId;
+        updates.transactionId = parsed.data.transactionId;
       }
       if (parsed.data.adminNotes !== undefined) {
-        booking.adminNotes = parsed.data.adminNotes;
+        updates.adminNotes = parsed.data.adminNotes;
       }
     } else {
-      booking.status = "cancelled";
+      updates.status = "cancelled";
     }
-    await booking.save();
 
-    const pkg = await TourPackage.findById(booking.packageId)
-      .select("title location duration imageUrl priceBdt")
-      .lean<LeanPackage | null>();
+    const updated = await Booking.findByIdAndUpdate(id, updates);
+    if (!updated) {
+      return NextResponse.json({ message: "Booking not found" }, { status: 404 });
+    }
 
-    const dto = serializeBooking(booking.toObject(), pkg);
+    const pkg = await TourPackage.findById(updated.packageId);
+    const dto = serializeBooking(updated, pkg);
     return NextResponse.json({ booking: dto });
   } catch (error) {
     console.error("PATCH booking:", error);
@@ -125,7 +95,7 @@ export async function GET(
 
     const { id } = await ctx.params;
     await DbConnect();
-    const booking = await Booking.findById(id).lean<LeanBooking | null>();
+    const booking = await Booking.findById(id);
     if (!booking) {
       return NextResponse.json({ message: "Booking not found" }, { status: 404 });
     }
@@ -133,9 +103,7 @@ export async function GET(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const pkg = await TourPackage.findById(booking.packageId)
-      .select("title location duration imageUrl priceBdt")
-      .lean<LeanPackage | null>();
+    const pkg = await TourPackage.findById(booking.packageId);
 
     return NextResponse.json({ booking: serializeBooking(booking, pkg) });
   } catch (error) {

@@ -14,10 +14,10 @@ export async function GET(req: Request) {
     }
 
     await DbConnect();
-    const docs = await Review.find({ packageId }).sort({ createdAt: -1 }).lean();
+    const docs = await Review.find({ packageId });
     const userIds = Array.from(new Set(docs.map((doc) => String(doc.userId))));
     const users = userIds.length
-      ? await User.find({ _id: { $in: userIds } }).select("name").lean()
+      ? await User.find({ _id: { $in: userIds } })
       : [];
     const userById = new Map(users.map((u) => [String(u._id), u]));
 
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     }
 
     await DbConnect();
-    const booking = await Booking.findById(parsed.data.bookingId).lean();
+    const booking = await Booking.findById(parsed.data.bookingId);
     if (!booking || String(booking.userId) !== auth.userId) {
       return NextResponse.json({ message: "Booking not found" }, { status: 404 });
     }
@@ -66,26 +66,21 @@ export async function POST(req: Request) {
       comment: parsed.data.comment,
     });
 
-    const summary = await Review.aggregate([
-      { $match: { packageId: booking.packageId } },
-      { $group: { _id: "$packageId", rating: { $avg: "$rating" } } },
-    ]);
-    if (summary[0]) {
+    const avgRating = await Review.getAverageRating(booking.packageId);
+    if (avgRating !== null) {
       await TourPackage.findByIdAndUpdate(booking.packageId, {
-        rating: Math.round(summary[0].rating * 10) / 10,
+        rating: Math.round(avgRating * 10) / 10,
       });
     }
 
     return NextResponse.json(
-      { review: serializeReview(created.toObject()) },
+      { review: serializeReview(created) },
       { status: 201 }
     );
-  } catch (error: unknown) {
+  } catch (error: any) {
     if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === 11000
+      (typeof error === "object" && error !== null) &&
+      (error.code === "ER_DUP_ENTRY" || error.errno === 1062 || error.code === 11000 || String(error.message).includes("Duplicate entry"))
     ) {
       return NextResponse.json(
         { message: "This booking has already been reviewed" },

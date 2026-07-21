@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { DbConnect } from "@/db/connection";
-import { TourPackage } from "@/db/models";
+import { TourPackage, type TourPackageFilter, type TourPackageSort } from "@/db/models";
 import PackageCard from "@/components/package-card";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
@@ -10,17 +10,6 @@ import { getAuthFromCookies } from "@/lib/auth-api";
 
 export const dynamic = "force-dynamic";
 
-type LeanPackage = {
-  _id: unknown;
-  title: string;
-  location: string;
-  duration: string;
-  priceBdt: number;
-  rating: number;
-  shortDescription: string;
-  imageUrl: string;
-};
-
 type SearchParams = {
   location?: string;
   minPrice?: string;
@@ -29,10 +18,6 @@ type SearchParams = {
   travelers?: string;
   sort?: string;
 };
-
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 export default async function ToursPage({
   searchParams,
@@ -48,13 +33,13 @@ export default async function ToursPage({
   const minPrice = Number(params.minPrice ?? "");
   const maxPrice = Number(params.maxPrice ?? "");
 
-  const filter: Record<string, unknown> = { isActive: { $ne: false } };
-  if (location) filter.location = { $regex: escapeRegex(location), $options: "i" };
-  if (duration) filter.duration = { $regex: escapeRegex(duration), $options: "i" };
+  const filter: TourPackageFilter = { isActive: { $ne: false } };
+  if (location) filter.location = location;
+  if (duration) filter.duration = duration;
   if (Number.isFinite(travelers) && travelers > 0) {
     filter.maxTravelers = { $gte: travelers };
   }
-  const priceFilter: Record<string, number> = {};
+  const priceFilter: { $gte?: number; $lte?: number } = {};
   if (Number.isFinite(minPrice) && minPrice > 0) priceFilter.$gte = minPrice;
   if (Number.isFinite(maxPrice) && maxPrice > 0) priceFilter.$lte = maxPrice;
   if (Object.keys(priceFilter).length) filter.priceBdt = priceFilter;
@@ -62,13 +47,11 @@ export default async function ToursPage({
   let packages: TourPackageDTO[] = [];
   try {
     await DbConnect();
-    let sortBy: Record<string, 1 | -1> = { createdAt: -1 };
+    let sortBy: TourPackageSort = { createdAt: -1 };
     if (sort === "price-low") sortBy = { priceBdt: 1 };
     if (sort === "price-high") sortBy = { priceBdt: -1 };
     if (sort === "rating") sortBy = { rating: -1, createdAt: -1 };
-    const docs = await TourPackage.find(filter)
-      .sort(sortBy)
-      .lean<LeanPackage[]>();
+    const docs = await TourPackage.find({ filter, sort: sortBy });
     packages = docs.map((doc) => serializeTourPackage(doc));
   } catch {
     packages = [];

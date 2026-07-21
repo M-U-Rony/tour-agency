@@ -26,33 +26,32 @@ export const adminUpdateUserSchema = updateUserSchema.extend({
 
 const packageImageRef = z
   .string()
-  .min(1)
-  .max(2048)
-  .refine(isValidPackageImageRef, "Must be a valid image URL or an uploaded path");
+  .min(1, "Image path or URL is required")
+  .max(4096);
 
 const packageImageRefs = z
   .array(packageImageRef)
-  .max(8)
+  .max(20)
   .optional()
   .default([]);
 
-const stringList = z.array(z.string().trim().min(1).max(300)).max(20).optional().default([]);
+const stringList = z.array(z.string().trim().min(1).max(1000)).max(50).optional().default([]);
 
 export const createTourPackageSchema = z.object({
-    title: z.string().min(1).max(200),
-    location: z.string().min(1).max(200),
-    duration: z.string().min(1).max(100),
-    priceBdt: z.number().positive(),
-    shortDescription: z.string().min(1).max(500),
+    title: z.string().min(1, "Title is required").max(500),
+    location: z.string().min(1, "Location is required").max(500),
+    duration: z.string().min(1, "Duration is required").max(300),
+    priceBdt: z.number().positive("Price must be greater than 0"),
+    shortDescription: z.string().min(1, "Short description is required").max(5000),
     imageUrl: packageImageRef,
     galleryUrls: packageImageRefs,
     itinerary: stringList,
     inclusions: stringList,
     exclusions: stringList,
-    pickupInfo: z.string().max(1000).optional().default(""),
-    cancellationPolicy: z.string().max(1000).optional().default(""),
-    availableDates: z.array(z.string().min(1)).max(60).optional().default([]),
-    maxTravelers: z.number().int().min(1).max(500).optional().default(20),
+    pickupInfo: z.string().max(3000).optional().default(""),
+    cancellationPolicy: z.string().max(3000).optional().default(""),
+    availableDates: z.array(z.string().min(1)).max(100).optional().default([]),
+    maxTravelers: z.number().int().min(1).max(1000).optional().default(20),
     isActive: z.boolean().optional().default(true),
 })
 

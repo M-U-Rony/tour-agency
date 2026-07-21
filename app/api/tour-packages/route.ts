@@ -8,10 +8,8 @@ import { serializeTourPackage } from "@/lib/tour-package";
 export async function GET() {
   try {
     await DbConnect();
-    const docs = await TourPackage.find().sort({ createdAt: -1 }).lean();
-    const packages = docs.map((doc) =>
-      serializeTourPackage(doc)
-    );
+    const docs = await TourPackage.find();
+    const packages = docs.map((doc) => serializeTourPackage(doc));
     return NextResponse.json({ packages });
   } catch (error) {
     console.error("GET tour-packages:", error);
@@ -36,12 +34,16 @@ export async function POST(req: Request) {
     }
 
     await DbConnect();
+    const availableDates = parsed.data.availableDates
+      .map((d) => new Date(d))
+      .filter((d) => !Number.isNaN(d.getTime()));
+
     const doc = await TourPackage.create({
       ...parsed.data,
-      availableDates: parsed.data.availableDates.map((d) => new Date(d)),
+      availableDates,
       rating: 0,
     });
-    const pkg = serializeTourPackage(doc.toObject());
+    const pkg = serializeTourPackage(doc);
     return NextResponse.json({ package: pkg }, { status: 201 });
   } catch (error) {
     console.error("POST tour-packages:", error);

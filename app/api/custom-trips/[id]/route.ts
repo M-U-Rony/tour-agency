@@ -26,9 +26,7 @@ export async function PATCH(
     }
 
     await DbConnect();
-    const doc = await CustomTripRequest.findByIdAndUpdate(id, parsed.data, {
-      new: true,
-    }).lean();
+    const doc = await CustomTripRequest.findByIdAndUpdate(id, parsed.data);
     if (!doc) {
       return NextResponse.json({ message: "Request not found" }, { status: 404 });
     }

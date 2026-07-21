@@ -11,26 +11,6 @@ import SiteFooter from "@/components/site-footer";
 
 export const dynamic = "force-dynamic";
 
-type LeanPackage = {
-  _id: unknown;
-  title: string;
-  location: string;
-  duration: string;
-  priceBdt: number;
-  rating: number;
-  shortDescription: string;
-  imageUrl: string;
-  galleryUrls?: string[];
-  itinerary?: string[];
-  inclusions?: string[];
-  exclusions?: string[];
-  pickupInfo?: string;
-  cancellationPolicy?: string;
-  availableDates?: Date[];
-  maxTravelers?: number;
-  isActive?: boolean;
-};
-
 export default async function TourDetailPage({
   params,
 }: {
@@ -40,7 +20,7 @@ export default async function TourDetailPage({
   let pkg: ReturnType<typeof serializeTourPackage> | null = null;
   try {
     await DbConnect();
-    const doc = await TourPackage.findById(id).lean<LeanPackage | null>();
+    const doc = await TourPackage.findById(id);
     if (doc) pkg = serializeTourPackage(doc);
   } catch {
     pkg = null;
@@ -208,10 +188,10 @@ export default async function TourDetailPage({
 }
 
 async function loadReviews(packageId: string): Promise<ReviewDTO[]> {
-  const docs = await Review.find({ packageId }).sort({ createdAt: -1 }).lean();
+  const docs = await Review.find({ packageId });
   const userIds = Array.from(new Set(docs.map((doc) => String(doc.userId))));
   const users = userIds.length
-    ? await User.find({ _id: { $in: userIds } }).select("name").lean()
+    ? await User.find({ _id: { $in: userIds } })
     : [];
   const userById = new Map(users.map((u) => [String(u._id), u]));
   return docs.map((doc) => serializeReview(doc, userById.get(String(doc.userId))));

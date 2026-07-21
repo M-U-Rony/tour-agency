@@ -10,21 +10,6 @@ import {
   travelDateIsBeforeLocalToday,
 } from "@/lib/booking";
 
-type LeanPackage = {
-  _id: unknown;
-  title: string;
-  location: string;
-  duration: string;
-  imageUrl: string;
-  priceBdt: number;
-};
-
-type LeanUser = {
-  _id: unknown;
-  name: string;
-  email: string;
-};
-
 export async function GET(req: Request) {
   try {
     const auth = await getAuthFromCookies();
@@ -40,22 +25,18 @@ export async function GET(req: Request) {
     const filter =
       wantAll && auth.role === "admin" ? {} : { userId: auth.userId };
 
-    const docs = await Booking.find(filter).sort({ createdAt: -1 }).lean();
+    const docs = await Booking.find(filter);
 
     const packageIds = Array.from(new Set(docs.map((d) => String(d.packageId))));
     const userIds = Array.from(new Set(docs.map((d) => String(d.userId))));
 
     const [packages, users] = await Promise.all([
       packageIds.length
-        ? (TourPackage.find({ _id: { $in: packageIds } })
-            .select("title location duration imageUrl priceBdt")
-            .lean() as Promise<LeanPackage[]>)
-        : Promise.resolve([] as LeanPackage[]),
+        ? TourPackage.find({ filter: { _id: { $in: packageIds } } })
+        : Promise.resolve([]),
       wantAll && auth.role === "admin" && userIds.length
-        ? (User.find({ _id: { $in: userIds } })
-            .select("name email")
-            .lean() as Promise<LeanUser[]>)
-        : Promise.resolve([] as LeanUser[]),
+        ? User.find({ _id: { $in: userIds } })
+        : Promise.resolve([]),
     ]);
 
     const pkgById = new Map(packages.map((p) => [String(p._id), p]));
@@ -63,24 +44,7 @@ export async function GET(req: Request) {
 
     const bookings = docs.map((d) =>
       serializeBooking(
-        {
-          _id: d._id,
-          userId: d.userId,
-          packageId: d.packageId,
-          travelDate: d.travelDate,
-          travelers: d.travelers,
-          contactPhone: d.contactPhone,
-          notes: d.notes,
-          travelerNames: d.travelerNames,
-          emergencyContact: d.emergencyContact,
-          status: d.status,
-          paymentStatus: d.paymentStatus,
-          paymentMethod: d.paymentMethod,
-          transactionId: d.transactionId,
-          adminNotes: d.adminNotes,
-          totalPriceBdt: d.totalPriceBdt,
-          createdAt: d.createdAt,
-        },
+        d,
         pkgById.get(String(d.packageId)) ?? null,
         userById.get(String(d.userId)) ?? null
       )
@@ -136,7 +100,7 @@ export async function POST(req: Request) {
     }
 
     await DbConnect();
-    const pkg = await TourPackage.findById(packageId).lean<LeanPackage | null>();
+    const pkg = await TourPackage.findById(packageId);
     if (!pkg) {
       return NextResponse.json({ message: "Package not found" }, { status: 404 });
     }
@@ -160,7 +124,7 @@ export async function POST(req: Request) {
       totalPriceBdt,
     });
 
-    const booking = serializeBooking(created.toObject(), pkg);
+    const booking = serializeBooking(created, pkg);
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
     console.error("POST bookings:", error);

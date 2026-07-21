@@ -3,28 +3,26 @@ import bcrypt from "bcryptjs";
 import { User } from "@/db/models";
 import { DbConnect } from "@/db/connection";
 import { createUserSchema } from "@/utils/zod/types";
-import { toAuthUser } from "@/lib/auth-user";
-
+import { toAuthUser, type UserDoc } from "@/lib/auth-user";
 
 export async function POST(req: Request) {
   try {
-    
-    await DbConnect();  
+    await DbConnect();
 
     const result = createUserSchema.safeParse(await req.json());
-    
+
     if (!result.success) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
     }
 
-    const { name, email, password} = result.data;
+    const { name, email, password } = result.data;
 
     if (!name || !email || !password) {
       return NextResponse.json({ message: "All fields are required" }, { status: 400 });
     }
 
     const existingUser = await User.findOne({ email });
-    
+
     if (existingUser) {
       return NextResponse.json(
         { message: "User with this email already exists" },
@@ -42,7 +40,7 @@ export async function POST(req: Request) {
     });
 
     const response = NextResponse.json(
-      { message: "User created successfully", user: toAuthUser(newUser) },
+      { message: "User created successfully", user: toAuthUser(newUser as unknown as UserDoc) },
       { status: 201 }
     );
 

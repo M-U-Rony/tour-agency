@@ -13,7 +13,7 @@ export async function GET() {
     }
 
     await DbConnect();
-    const docs = await CustomTripRequest.find().sort({ createdAt: -1 }).lean();
+    const docs = await CustomTripRequest.find();
     return NextResponse.json({
       requests: docs.map((doc) => serializeCustomTripRequest(doc)),
     });
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       returnDate: new Date(parsed.data.returnDate),
     });
     return NextResponse.json(
-      { request: serializeCustomTripRequest(created.toObject()) },
+      { request: serializeCustomTripRequest(created) },
       { status: 201 }
     );
   } catch (error) {

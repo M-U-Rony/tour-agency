@@ -30,18 +30,12 @@ export async function GET() {
     }
 
     await DbConnect();
-    const user = await User.findById(userId).select("-password").lean();
+    const user = await User.findById(userId);
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 401 });
     }
 
-    const doc = user as {
-      _id: unknown;
-      name: string;
-      email: string;
-      role: string;
-    };
-    return NextResponse.json({ user: toAuthUser(doc) });
+    return NextResponse.json({ user: toAuthUser(user as unknown as UserDoc) });
   } catch (error) {
     console.error("Auth me error:", error);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
@@ -82,28 +76,31 @@ export async function PUT(req: Request) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
+    const updates: Parameters<typeof User.update>[1] = {};
+
     if (email && email !== user.email) {
       const existing = await User.findOne({ email });
       if (existing) {
         return NextResponse.json({ message: "Email already in use" }, { status: 409 });
       }
-      user.email = email;
+      updates.email = email;
     }
 
-    if (name) user.name = name;
+    if (name) updates.name = name;
 
     if (password) {
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
+      updates.password = await bcrypt.hash(password, salt);
     }
 
-    if (typeof profileImage === "string") user.profileImage = profileImage;
-    if (typeof profilePage === "string") user.profilePage = profilePage;
+    if (typeof profileImage === "string") updates.profileImage = profileImage;
+    if (typeof profilePage === "string") updates.profilePage = profilePage;
 
-    await user.save();
+    const saved = await User.update(userId, updates);
+    if (!saved) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
 
-    const saved = await User.findById(userId).select("-password").lean();
-    // Mongoose lean() returns a plain object; we type-narrow it for our auth mapping.
     return NextResponse.json({ user: toAuthUser(saved as unknown as UserDoc) });
   } catch (error) {
     console.error("Update profile error:", error);
