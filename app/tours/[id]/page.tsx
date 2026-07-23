@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { Clock, MapPin, Star } from "lucide-react";
 import { DbConnect } from "@/db/connection";
-import { Review, TourPackage, User } from "@/db/models";
+import { Booking, Review, TourPackage, User } from "@/db/models";
 import { serializeTourPackage, formatBdt } from "@/lib/tour-package";
 import { serializeReview, type ReviewDTO } from "@/lib/review";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import BookPackageForm from "@/components/book-package-form";
+import PackageReviews, { type UserBookingForPackage } from "@/components/package-reviews";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 
@@ -29,9 +30,14 @@ export default async function TourDetailPage({
 
   const auth = await getAuthFromCookies();
   const reviews = await loadReviews(pkg.id);
+  let userBookings: UserBookingForPackage[] = [];
+  if (auth) {
+    userBookings = await loadUserBookingsForPackage(auth.userId, pkg.id, reviews);
+  }
+
   const ratingRounded = Math.round(pkg.rating * 10) / 10;
   const showRating = pkg.rating > 0;
-  const gallery = [pkg.imageUrl, ...(pkg.galleryUrls ?? [])].slice(0, 4);
+  const gallery = Array.from(new Set([pkg.imageUrl, ...(pkg.galleryUrls ?? [])])).filter(Boolean);
   const itinerary =
     pkg.itinerary && pkg.itinerary.length
       ? pkg.itinerary
@@ -93,16 +99,21 @@ export default async function TourDetailPage({
             </p>
 
             {gallery.length > 1 && (
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {gallery.map((src) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={src}
-                    src={src}
-                    alt=""
-                    className="h-28 rounded-2xl border border-emerald-100 object-cover"
-                  />
-                ))}
+              <div className="mt-8">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Destination Photo Gallery ({gallery.length} photos)
+                </h3>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {gallery.map((src, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={src + i}
+                      src={src}
+                      alt="Destination gallery photo"
+                      className="h-28 w-full rounded-2xl border border-emerald-100 object-cover shadow-sm transition-transform duration-300 hover:scale-[1.03]"
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -136,40 +147,13 @@ export default async function TourDetailPage({
               </Highlight>
             </section>
 
-            <section className="mt-10">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-slate-900">Traveler reviews</h2>
-                <span className="text-sm font-semibold text-teal-700">
-                  {reviews.length} verified
-                </span>
-              </div>
-              {reviews.length === 0 ? (
-                <p className="mt-4 rounded-2xl border border-dashed border-emerald-200 bg-white p-6 text-sm text-slate-500">
-                  No reviews yet. Completed travelers can review this package from their dashboard.
-                </p>
-              ) : (
-                <div className="mt-4 grid gap-4">
-                  {reviews.map((review) => (
-                    <article
-                      key={review.id}
-                      className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-semibold text-slate-900">
-                          {review.user?.username || "Traveler"}
-                        </p>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                          <Star size={14} className="fill-current" /> {review.rating}
-                        </span>
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-slate-700">
-                        {review.comment}
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
+            <PackageReviews
+              packageId={pkg.id}
+              initialReviews={reviews}
+              isAuthed={!!auth}
+              userBookings={userBookings}
+              currentUserId={auth?.userId}
+            />
           </div>
 
           <aside className="lg:sticky lg:top-6 lg:self-start">
@@ -177,6 +161,11 @@ export default async function TourDetailPage({
               packageId={pkg.id}
               pricePerPerson={pkg.priceBdt}
               isAuthenticated={!!auth}
+              totalSeats={pkg.totalSeats}
+              availableSeats={pkg.availableSeats}
+              startDate={pkg.startDate}
+              endDate={pkg.endDate}
+              availableDates={pkg.availableDates}
               adminPreview={auth?.role === "admin"}
             />
           </aside>
@@ -195,6 +184,24 @@ async function loadReviews(packageId: string): Promise<ReviewDTO[]> {
     : [];
   const userById = new Map(users.map((u) => [String(u._id), u]));
   return docs.map((doc) => serializeReview(doc, userById.get(String(doc.userId))));
+}
+
+async function loadUserBookingsForPackage(
+  userId: string,
+  packageId: string,
+  reviews: ReviewDTO[]
+): Promise<UserBookingForPackage[]> {
+  const docs = await Booking.find({ userId });
+  const reviewedBookingIds = new Set(reviews.map((r) => r.bookingId));
+
+  return docs
+    .filter((b) => String(b.packageId) === packageId)
+    .map((b) => ({
+      id: String(b._id),
+      travelDate: new Date(b.travelDate).toISOString(),
+      status: b.status,
+      hasReviewed: reviewedBookingIds.has(String(b._id)),
+    }));
 }
 
 function Highlight({ title, children }: { title: string; children: React.ReactNode }) {

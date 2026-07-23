@@ -17,8 +17,10 @@ const emptyForm = {
   exclusions: "",
   pickupInfo: "",
   cancellationPolicy: "",
-  availableDates: "",
-  maxTravelers: "20",
+  startDate: "",
+  endDate: "",
+  totalSeats: "20",
+  availableSeats: "20",
   isActive: true,
 };
 
@@ -45,18 +47,21 @@ export default function PackageForm({
   const [form, setForm] = useState<FormState>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [message, setMessage] = useState<{
     type: "ok" | "err";
     text: string;
   } | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const formSectionRef = useRef<HTMLElement | null>(null);
 
   const isEditing = editingPkg !== null;
 
   useEffect(() => {
     if (editingPkg) {
+      const total = editingPkg.totalSeats ?? 20;
       setForm({
         title: editingPkg.title,
         location: editingPkg.location,
@@ -70,10 +75,14 @@ export default function PackageForm({
         exclusions: (editingPkg.exclusions ?? []).join("\n"),
         pickupInfo: editingPkg.pickupInfo ?? "",
         cancellationPolicy: editingPkg.cancellationPolicy ?? "",
-        availableDates: (editingPkg.availableDates ?? [])
-          .map((d) => new Date(d).toISOString().slice(0, 10))
-          .join("\n"),
-        maxTravelers: String(editingPkg.maxTravelers ?? 20),
+        startDate: editingPkg.startDate
+          ? new Date(editingPkg.startDate).toISOString().slice(0, 16)
+          : "",
+        endDate: editingPkg.endDate
+          ? new Date(editingPkg.endDate).toISOString().slice(0, 16)
+          : "",
+        totalSeats: String(total),
+        availableSeats: String(editingPkg.availableSeats ?? total),
         isActive: editingPkg.isActive ?? true,
       });
       setMessage(null);
@@ -112,7 +121,7 @@ export default function PackageForm({
       setForm((prev) => ({ ...prev, imageUrl: data.url! }));
       setMessage({
         type: "ok",
-        text: "Image uploaded. You can publish or save when ready.",
+        text: "Main cover image uploaded.",
       });
     } catch (err: unknown) {
       setMessage({
@@ -121,6 +130,43 @@ export default function PackageForm({
       });
     } finally {
       setUploadingImage(false);
+    }
+  }
+
+  async function handleGalleryFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    e.target.value = "";
+    if (!files || files.length === 0) return;
+    setMessage(null);
+    setUploadingGallery(true);
+    try {
+      const fd = new FormData();
+      Array.from(files).forEach((f) => fd.append("files", f));
+      const res = await fetch("/api/upload/package-image", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      const data = (await res.json()) as { urls?: string[]; url?: string; message?: string };
+      if (!res.ok) {
+        throw new Error(data.message || "Upload failed");
+      }
+      const newUrls = data.urls ?? (data.url ? [data.url] : []);
+      if (newUrls.length === 0) throw new Error("Invalid response");
+      const current = splitLines(form.galleryUrls);
+      const combined = Array.from(new Set([...current, ...newUrls])).join("\n");
+      setForm((prev) => ({ ...prev, galleryUrls: combined }));
+      setMessage({
+        type: "ok",
+        text: `${newUrls.length} destination gallery photo(s) uploaded.`,
+      });
+    } catch (err: unknown) {
+      setMessage({
+        type: "err",
+        text: err instanceof Error ? err.message : "Could not upload destination photos",
+      });
+    } finally {
+      setUploadingGallery(false);
     }
   }
 
@@ -151,8 +197,8 @@ export default function PackageForm({
       exclusions: splitLines(form.exclusions),
       pickupInfo: form.pickupInfo.trim(),
       cancellationPolicy: form.cancellationPolicy.trim(),
-      availableDates: splitLines(form.availableDates),
-      maxTravelers: Number(form.maxTravelers),
+      startDate: form.startDate,
+      endDate: form.endDate,
       isActive: form.isActive,
     };
 
@@ -288,21 +334,6 @@ export default function PackageForm({
           />
         </label>
 
-        <label>
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Max travelers
-          </span>
-          <input
-            required
-            type="number"
-            min={1}
-            step={1}
-            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
-            value={form.maxTravelers}
-            onChange={(e) => setForm({ ...form, maxTravelers: e.target.value })}
-          />
-        </label>
-
         <label className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 cursor-pointer">
           <input
             type="checkbox"
@@ -355,24 +386,68 @@ export default function PackageForm({
                 onClick={() => setForm((prev) => ({ ...prev, imageUrl: "" }))}
                 className="text-xs font-semibold text-red-600 hover:underline cursor-pointer"
               >
-                Remove image
+                Remove main image
               </button>
             </div>
           ) : null}
         </div>
 
-        <label className="sm:col-span-2">
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Gallery image URLs
-          </span>
-          <textarea
-            rows={3}
-            className="w-full resize-y rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
-            placeholder="One image URL or uploaded path per line"
-            value={form.galleryUrls}
-            onChange={(e) => setForm({ ...form, galleryUrls: e.target.value })}
+        <div className="sm:col-span-2 space-y-3 border-t border-emerald-100/80 pt-4">
+          <div>
+            <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              More Destination Gallery Photos
+            </span>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Upload additional photos of the destination to show in the package image gallery.
+            </p>
+          </div>
+          <input
+            ref={galleryInputRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="sr-only"
+            onChange={(e) => void handleGalleryFilesChange(e)}
           />
-        </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={uploadingGallery}
+              onClick={() => galleryInputRef.current?.click()}
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-100 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:bg-[#f4fbf8] disabled:opacity-60 cursor-pointer"
+            >
+              <ImagePlus size={18} className="text-teal-700" />
+              {uploadingGallery ? "Uploading photos..." : "Upload destination photos"}
+            </button>
+            {splitLines(form.galleryUrls).length > 0 && (
+              <span className="text-xs font-medium text-teal-800 bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
+                {splitLines(form.galleryUrls).length} photo(s) added
+              </span>
+            )}
+          </div>
+
+          {splitLines(form.galleryUrls).length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 pt-2">
+              {splitLines(form.galleryUrls).map((url, idx) => (
+                <div key={url + idx} className="group relative aspect-4/3 overflow-hidden rounded-xl border border-emerald-100 bg-[#f4fbf8]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = splitLines(form.galleryUrls).filter((_, i) => i !== idx).join("\n");
+                      setForm((prev) => ({ ...prev, galleryUrls: updated }));
+                    }}
+                    title="Remove photo"
+                    className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/80 text-white shadow-md transition-transform hover:bg-red-600 active:scale-95 cursor-pointer"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
 
         <label className="sm:col-span-2">
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -453,16 +528,57 @@ export default function PackageForm({
           />
         </label>
 
-        <label className="sm:col-span-2">
+        <label>
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Available dates
+            Start Date & Time
           </span>
-          <textarea
-            rows={3}
-            className="w-full resize-y rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
-            placeholder="YYYY-MM-DD, one date per line"
-            value={form.availableDates}
-            onChange={(e) => setForm({ ...form, availableDates: e.target.value })}
+          <input
+            type="datetime-local"
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+            value={form.startDate}
+            onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+          />
+        </label>
+
+        <label>
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+            End Date & Time
+          </span>
+          <input
+            type="datetime-local"
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+            value={form.endDate}
+            onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+          />
+        </label>
+
+        <label>
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Total Seats *
+          </span>
+          <input
+            type="number"
+            min={1}
+            required
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+            placeholder="20"
+            value={form.totalSeats}
+            onChange={(e) => setForm({ ...form, totalSeats: e.target.value })}
+          />
+        </label>
+
+        <label>
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Available Seats *
+          </span>
+          <input
+            type="number"
+            min={0}
+            required
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+            placeholder="20"
+            value={form.availableSeats}
+            onChange={(e) => setForm({ ...form, availableSeats: e.target.value })}
           />
         </label>
 

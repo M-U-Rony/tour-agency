@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import ContactPageContent from "@/components/contact-page-content";
@@ -10,5 +11,8 @@ export const metadata: Metadata = {
 
 export default async function ContactPage() {
   const auth = await getAuthFromCookies();
-  return <ContactPageContent isAuthed={!!auth} />;
+  if (!auth) {
+    redirect("/signin?next=/contact");
+  }
+  return <ContactPageContent isAuthed={true} />;
 }

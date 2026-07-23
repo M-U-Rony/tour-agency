@@ -149,13 +149,13 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
     <main className="min-h-screen bg-[linear-gradient(180deg,#f4fbf8_0%,#effaf5_36%,#ffffff_100%)] text-slate-900">
       <section className="relative isolate overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
           style={{
             backgroundImage:
-              "linear-gradient(135deg, rgba(5, 34, 63, 0.88), rgba(8, 89, 120, 0.60) 45%, rgba(9, 124, 103, 0.44)), url('/sajek.jpg')",
+              "linear-gradient(180deg, rgba(15, 23, 42, 0.55) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(15, 23, 42, 0.70) 100%), url('/sun.jpg')",
           }}
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(52,211,153,0.18),transparent_25%)]" />
+        <div className="absolute inset-0 bg-teal-950/20 backdrop-brightness-[0.95]" />
 
         <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-6 pb-16 pt-6 lg:px-10">
           <LandingNav user={user} />
@@ -190,53 +190,6 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
                   Plan Your Trip
                 </a>
               </div>
-
-              <form
-                action="/tours"
-                method="GET"
-                className="mt-10 grid max-w-2xl gap-4 rounded-4xl border border-white/18 bg-white/10 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl md:grid-cols-[1.2fr_1fr_0.8fr_auto]"
-              >
-                <label className="space-y-2 rounded-2xl bg-white/92 px-4 py-3 text-slate-700">
-                  <span className="block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Destination
-                  </span>
-                  <input
-                    type="text"
-                    name="location"
-                    placeholder="Where do you want to go?"
-                    className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
-                  />
-                </label>
-                <label className="space-y-2 rounded-2xl bg-white/92 px-4 py-3 text-slate-700">
-                  <span className="block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Duration
-                  </span>
-                  <input
-                    type="text"
-                    name="duration"
-                    placeholder="3 Days"
-                    className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
-                  />
-                </label>
-                <label className="space-y-2 rounded-2xl bg-white/92 px-4 py-3 text-slate-700">
-                  <span className="block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Max ৳
-                  </span>
-                  <input
-                    type="number"
-                    name="maxPrice"
-                    min={0}
-                    placeholder="20000"
-                    className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="rounded-2xl bg-teal-700 px-6 py-4 text-sm font-semibold text-white transition hover:bg-teal-800"
-                >
-                  Search
-                </button>
-              </form>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-1">

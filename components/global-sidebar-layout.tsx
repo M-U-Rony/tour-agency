@@ -20,7 +20,8 @@ export default function GlobalSidebarLayout({
     pathname.startsWith("/admin") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/custom-trips") ||
-    pathname.startsWith("/user/dashboard");
+    pathname.startsWith("/user/dashboard") ||
+    pathname.startsWith("/wishlist");
 
   const isSignRoute = pathname === "/signin" || pathname === "/signup";
 

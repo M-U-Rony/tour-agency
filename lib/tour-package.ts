@@ -14,7 +14,10 @@ export type TourPackageDTO = {
   pickupInfo?: string;
   cancellationPolicy?: string;
   availableDates?: string[];
-  maxTravelers?: number;
+  startDate?: string;
+  endDate?: string;
+  totalSeats?: number;
+  availableSeats?: number;
   isActive?: boolean;
 };
 
@@ -42,9 +45,13 @@ export function serializeTourPackage(doc: {
   pickupInfo?: string;
   cancellationPolicy?: string;
   availableDates?: Array<Date | string>;
-  maxTravelers?: number;
+  startDate?: Date | string;
+  endDate?: Date | string;
+  totalSeats?: number;
+  availableSeats?: number;
   isActive?: boolean;
 }): TourPackageDTO {
+  const total = doc.totalSeats ?? 20;
   return {
     id: String(doc._id),
     title: doc.title,
@@ -61,7 +68,32 @@ export function serializeTourPackage(doc: {
     pickupInfo: doc.pickupInfo ?? "",
     cancellationPolicy: doc.cancellationPolicy ?? "",
     availableDates: (doc.availableDates ?? []).map(toIso),
-    maxTravelers: doc.maxTravelers ?? 20,
+    startDate: doc.startDate ? toIso(doc.startDate) : undefined,
+    endDate: doc.endDate ? toIso(doc.endDate) : undefined,
+    totalSeats: total,
+    availableSeats: doc.availableSeats ?? total,
     isActive: doc.isActive ?? true,
   };
+}
+
+export function isTourUpcoming(pkg: TourPackageDTO): boolean {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  if (pkg.startDate) {
+    const start = new Date(pkg.startDate).getTime();
+    if (!Number.isNaN(start)) return start >= startOfToday;
+  }
+  if (pkg.endDate) {
+    const end = new Date(pkg.endDate).getTime();
+    if (!Number.isNaN(end)) return end >= startOfToday;
+  }
+
+  if (pkg.availableDates && pkg.availableDates.length > 0) {
+    return pkg.availableDates.some((d) => {
+      const date = new Date(d);
+      return !Number.isNaN(date.getTime()) && date.getTime() >= startOfToday;
+    });
+  }
+  return true;
 }

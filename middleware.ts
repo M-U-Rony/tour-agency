@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/user", "/admin", "/profile", "/custom-trips"];
+const PROTECTED_PREFIXES = ["/dashboard", "/user", "/admin", "/profile", "/custom-trips", "/contact"];
 const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/signin"];
 const ADMIN_PREFIXES = ["/admin"];
 
@@ -83,5 +83,7 @@ export const config = {
     "/admin/:path*",
     "/profile/:path*",
     "/custom-trips/:path*",
+    "/contact",
+    "/contact/:path*",
   ],
 };

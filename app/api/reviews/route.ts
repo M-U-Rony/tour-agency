@@ -51,9 +51,18 @@ export async function POST(req: Request) {
     if (!booking || String(booking.userId) !== auth.userId) {
       return NextResponse.json({ message: "Booking not found" }, { status: 404 });
     }
-    if (booking.status !== "completed") {
+    if (booking.status === "cancelled") {
       return NextResponse.json(
-        { message: "Only completed trips can be reviewed" },
+        { message: "Cancelled bookings cannot be reviewed" },
+        { status: 400 }
+      );
+    }
+
+    const travelDate = new Date(booking.travelDate);
+    const isExpired = booking.status === "completed" || travelDate.getTime() <= Date.now();
+    if (!isExpired) {
+      return NextResponse.json(
+        { message: "Review will be enabled after your trip date has passed" },
         { status: 400 }
       );
     }
@@ -73,8 +82,10 @@ export async function POST(req: Request) {
       });
     }
 
+    const user = await User.findById(auth.userId);
+
     return NextResponse.json(
-      { review: serializeReview(created) },
+      { review: serializeReview(created, user) },
       { status: 201 }
     );
   } catch (error: any) {

@@ -7,8 +7,6 @@ import {
   MapPin,
   Users,
   CalendarDays,
-  Phone,
-  Mail,
   MessageSquare,
   Compass,
   Banknote,
@@ -45,9 +43,6 @@ type FormState = {
   children: number;
   budget: string;
   accommodation: string;
-  name: string;
-  email: string;
-  phone: string;
   notes: string;
 };
 
@@ -61,9 +56,6 @@ const initialForm: FormState = {
   children: 0,
   budget: "",
   accommodation: "",
-  name: "",
-  email: "",
-  phone: "",
   notes: "",
 };
 
@@ -120,8 +112,7 @@ export default function CustomTripForm() {
           Request received!
         </h3>
         <p className="max-w-sm text-slate-600 leading-7">
-          Thank you, <strong>{form.name}</strong>. Our team will review your custom trip request and
-          reach out to you within 24 hours on <strong>{form.phone || form.email}</strong>.
+          Thank you! Our travel team has received your custom trip request and will review it and reach out to you within 24 hours.
         </p>
         <div className="flex flex-wrap justify-center gap-3 mt-2">
           <button
@@ -343,66 +334,18 @@ export default function CustomTripForm() {
         </div>
       </div>
 
-      {/* ── Section: Contact Info ─────────────────────── */}
+      {/* ── Section: Additional Notes ────────────────── */}
       <div className="mb-8 border-t border-slate-100 pt-8">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <Phone className="h-5 w-5 text-teal-700" />
-          Your contact details
-        </h2>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className={labelClass}>
-              Full name *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Your full name"
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>
-              <Mail className="h-3.5 w-3.5" /> Email address *
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(e) => set("email", e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>
-              <Phone className="h-3.5 w-3.5" /> Phone / WhatsApp *
-            </label>
-            <input
-              type="tel"
-              required
-              placeholder="+880 17XX XXXXXX"
-              value={form.phone}
-              onChange={(e) => set("phone", e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={labelClass}>
-              <MessageSquare className="h-3.5 w-3.5" /> Special requirements or notes
-            </label>
-            <textarea
-              rows={4}
-              placeholder="Any dietary needs, mobility requirements, specific interests, or anything else our team should know…"
-              value={form.notes}
-              onChange={(e) => set("notes", e.target.value)}
-              className={`${inputClass} resize-y`}
-            />
-          </div>
-        </div>
+        <label className={labelClass}>
+          <MessageSquare className="h-3.5 w-3.5" /> Special requirements or notes (optional)
+        </label>
+        <textarea
+          rows={4}
+          placeholder="Any dietary needs, mobility requirements, specific interests, or anything else our team should know…"
+          value={form.notes}
+          onChange={(e) => set("notes", e.target.value)}
+          className={`${inputClass} resize-y mt-2`}
+        />
       </div>
 
       {error && (

@@ -19,7 +19,10 @@ export type TourPackageRow = {
   pickupInfo: string;
   cancellationPolicy: string;
   availableDates: Date[];
-  maxTravelers: number;
+  startDate?: Date;
+  endDate?: Date;
+  totalSeats: number;
+  availableSeats: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -29,7 +32,6 @@ export type TourPackageFilter = {
   isActive?: boolean | { $ne?: boolean };
   location?: string | { $regex?: string; $options?: string };
   duration?: string | { $regex?: string; $options?: string };
-  maxTravelers?: number | { $gte?: number };
   priceBdt?: number | { $gte?: number; $lte?: number };
   _id?: { $in: (string | number)[] };
 };
@@ -40,7 +42,8 @@ function normalizePackageRow(row: any): TourPackageRow {
   const norm = normalizeRow(row) as TourPackageRow;
   norm.priceBdt = Number(norm.priceBdt);
   norm.rating = Number(norm.rating);
-  norm.maxTravelers = Number(norm.maxTravelers);
+  norm.totalSeats = Number(norm.totalSeats ?? 20);
+  norm.availableSeats = Number(norm.availableSeats ?? norm.totalSeats ?? 20);
   norm.isActive = Boolean(norm.isActive);
   norm.galleryUrls = parseJsonField<string[]>(norm.galleryUrls, []);
   norm.itinerary = parseJsonField<string[]>(norm.itinerary, []);
@@ -48,7 +51,27 @@ function normalizePackageRow(row: any): TourPackageRow {
   norm.exclusions = parseJsonField<string[]>(norm.exclusions, []);
   const rawDates = parseJsonField<string[]>(norm.availableDates, []);
   norm.availableDates = rawDates.map((d) => new Date(d));
+  if (norm.startDate) norm.startDate = new Date(norm.startDate);
+  if (norm.endDate) norm.endDate = new Date(norm.endDate);
   return norm;
+}
+
+let columnsEnsured = false;
+async function ensureColumns() {
+  if (columnsEnsured) return;
+  try {
+    await pool.query("ALTER TABLE tour_packages ADD COLUMN startDate DATETIME NULL;");
+  } catch {}
+  try {
+    await pool.query("ALTER TABLE tour_packages ADD COLUMN endDate DATETIME NULL;");
+  } catch {}
+  try {
+    await pool.query("ALTER TABLE tour_packages ADD COLUMN totalSeats INT DEFAULT 20;");
+  } catch {}
+  try {
+    await pool.query("ALTER TABLE tour_packages ADD COLUMN availableSeats INT DEFAULT 20;");
+  } catch {}
+  columnsEnsured = true;
 }
 
 export const TourPackage = {
@@ -57,92 +80,82 @@ export const TourPackage = {
     sort?: TourPackageSort;
     limit?: number;
   }): Promise<TourPackageRow[]> {
+    await ensureColumns();
     const filter = options?.filter ?? {};
-    const sort = options?.sort;
-    const limit = options?.limit;
-
     const whereClauses: string[] = [];
-    const params: any[] = [];
-
-    if (filter._id?.$in && filter._id.$in.length > 0) {
-      const ids = filter._id.$in.map((i) => Number(i)).filter((i) => !Number.isNaN(i));
-      if (ids.length === 0) return [];
-      whereClauses.push(`id IN (${ids.map(() => "?").join(",")})`);
-      params.push(...ids);
-    }
+    const values: any[] = [];
 
     if (filter.isActive !== undefined) {
       if (typeof filter.isActive === "boolean") {
         whereClauses.push("isActive = ?");
-        params.push(filter.isActive);
-      } else if (typeof filter.isActive === "object" && filter.isActive.$ne !== undefined) {
+        values.push(filter.isActive);
+      } else if (filter.isActive.$ne !== undefined) {
         whereClauses.push("isActive != ?");
-        params.push(filter.isActive.$ne);
+        values.push(filter.isActive.$ne);
       }
     }
 
     if (filter.location) {
-      const locStr = typeof filter.location === "string" ? filter.location : filter.location.$regex ?? "";
-      if (locStr) {
+      if (typeof filter.location === "string") {
         whereClauses.push("location LIKE ?");
-        params.push(`%${locStr}%`);
+        values.push(`%${filter.location}%`);
       }
     }
 
     if (filter.duration) {
-      const durStr = typeof filter.duration === "string" ? filter.duration : filter.duration.$regex ?? "";
-      if (durStr) {
+      if (typeof filter.duration === "string") {
         whereClauses.push("duration LIKE ?");
-        params.push(`%${durStr}%`);
-      }
-    }
-
-    if (filter.maxTravelers) {
-      const mt = typeof filter.maxTravelers === "number" ? filter.maxTravelers : filter.maxTravelers.$gte ?? 0;
-      if (mt > 0) {
-        whereClauses.push("maxTravelers >= ?");
-        params.push(mt);
+        values.push(`%${filter.duration}%`);
       }
     }
 
     if (filter.priceBdt && typeof filter.priceBdt === "object") {
       if (filter.priceBdt.$gte !== undefined) {
         whereClauses.push("priceBdt >= ?");
-        params.push(filter.priceBdt.$gte);
+        values.push(filter.priceBdt.$gte);
       }
       if (filter.priceBdt.$lte !== undefined) {
         whereClauses.push("priceBdt <= ?");
-        params.push(filter.priceBdt.$lte);
+        values.push(filter.priceBdt.$lte);
       }
     }
 
-    let query = "SELECT * FROM tour_packages";
+    if (filter._id && Array.isArray(filter._id.$in) && filter._id.$in.length > 0) {
+      const placeholders = filter._id.$in.map(() => "?").join(",");
+      whereClauses.push(`id IN (${placeholders})`);
+      values.push(...filter._id.$in.map(Number));
+    }
+
+    let sql = "SELECT * FROM tour_packages";
     if (whereClauses.length > 0) {
-      query += " WHERE " + whereClauses.join(" AND ");
+      sql += " WHERE " + whereClauses.join(" AND ");
     }
 
-    if (sort) {
-      const sortParts: string[] = [];
-      for (const [key, dir] of Object.entries(sort)) {
-        sortParts.push(`${key} ${dir === -1 ? "DESC" : "ASC"}`);
+    const sortObj = options?.sort;
+    if (sortObj) {
+      const orderParts: string[] = [];
+      for (const [key, val] of Object.entries(sortObj)) {
+        const dir = val === 1 ? "ASC" : "DESC";
+        orderParts.push(`${key} ${dir}`);
       }
-      if (sortParts.length > 0) {
-        query += " ORDER BY " + sortParts.join(", ");
+      if (orderParts.length > 0) {
+        sql += " ORDER BY " + orderParts.join(", ");
       }
     } else {
-      query += " ORDER BY createdAt DESC";
+      sql += " ORDER BY id DESC";
     }
 
-    if (limit && limit > 0) {
-      query += " LIMIT ?";
-      params.push(limit);
+    if (options?.limit) {
+      sql += " LIMIT ?";
+      values.push(options.limit);
     }
 
-    const [rows] = await pool.query<RowDataPacket[]>(query, params);
+    const [rows] = await pool.query<RowDataPacket[]>(sql, values);
     return rows.map(normalizePackageRow);
   },
 
   async findById(id: string | number): Promise<TourPackageRow | null> {
+    await ensureColumns();
     const numId = Number(id);
     if (Number.isNaN(numId)) return null;
     const [rows] = await pool.query<RowDataPacket[]>(
@@ -167,14 +180,23 @@ export const TourPackage = {
     pickupInfo?: string;
     cancellationPolicy?: string;
     availableDates?: Date[] | string[];
-    maxTravelers?: number;
+    startDate?: Date | string;
+    endDate?: Date | string;
+    totalSeats?: number;
+    availableSeats?: number;
     isActive?: boolean;
     rating?: number;
   }): Promise<TourPackageRow> {
+    await ensureColumns();
+    const startDateVal = data.startDate ? new Date(data.startDate) : null;
+    const endDateVal = data.endDate ? new Date(data.endDate) : null;
+    const totalSeats = data.totalSeats ?? 20;
+    const availableSeats = data.availableSeats ?? totalSeats;
+
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO tour_packages 
-      (title, location, duration, priceBdt, rating, shortDescription, imageUrl, galleryUrls, itinerary, inclusions, exclusions, pickupInfo, cancellationPolicy, availableDates, maxTravelers, isActive)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (title, location, duration, priceBdt, rating, shortDescription, imageUrl, galleryUrls, itinerary, inclusions, exclusions, pickupInfo, cancellationPolicy, availableDates, startDate, endDate, totalSeats, availableSeats, isActive)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.title,
         data.location,
@@ -190,7 +212,10 @@ export const TourPackage = {
         data.pickupInfo ?? "",
         data.cancellationPolicy ?? "",
         JSON.stringify((data.availableDates ?? []).map((d) => new Date(d).toISOString())),
-        data.maxTravelers ?? 20,
+        startDateVal,
+        endDateVal,
+        totalSeats,
+        availableSeats,
         data.isActive ?? true,
       ]
     );
@@ -217,10 +242,14 @@ export const TourPackage = {
       pickupInfo: string;
       cancellationPolicy: string;
       availableDates: Date[] | string[];
-      maxTravelers: number;
+      startDate: Date | string;
+      endDate: Date | string;
+      totalSeats: number;
+      availableSeats: number;
       isActive: boolean;
     }>
   ): Promise<TourPackageRow | null> {
+    await ensureColumns();
     const numId = Number(id);
     if (Number.isNaN(numId)) return null;
 
@@ -244,7 +273,16 @@ export const TourPackage = {
       fields.push("availableDates = ?");
       values.push(JSON.stringify(data.availableDates.map((d) => new Date(d).toISOString())));
     }
-    if (data.maxTravelers !== undefined) { fields.push("maxTravelers = ?"); values.push(data.maxTravelers); }
+    if (data.startDate !== undefined) {
+      fields.push("startDate = ?");
+      values.push(data.startDate ? new Date(data.startDate) : null);
+    }
+    if (data.endDate !== undefined) {
+      fields.push("endDate = ?");
+      values.push(data.endDate ? new Date(data.endDate) : null);
+    }
+    if (data.totalSeats !== undefined) { fields.push("totalSeats = ?"); values.push(data.totalSeats); }
+    if (data.availableSeats !== undefined) { fields.push("availableSeats = ?"); values.push(data.availableSeats); }
     if (data.isActive !== undefined) { fields.push("isActive = ?"); values.push(data.isActive); }
 
     if (fields.length === 0) return TourPackage.findById(numId);
@@ -252,6 +290,15 @@ export const TourPackage = {
     values.push(numId);
     await pool.query(`UPDATE tour_packages SET ${fields.join(", ")} WHERE id = ?`, values);
     return TourPackage.findById(numId);
+  },
+
+  async decrementAvailableSeats(id: string | number, count: number): Promise<void> {
+    const numId = Number(id);
+    if (Number.isNaN(numId)) return;
+    await pool.query(
+      "UPDATE tour_packages SET availableSeats = GREATEST(0, availableSeats - ?) WHERE id = ?",
+      [count, numId]
+    );
   },
 
   async findByIdAndDelete(id: string | number): Promise<TourPackageRow | null> {

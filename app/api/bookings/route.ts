@@ -88,21 +88,33 @@ export async function POST(req: Request) {
       transactionId,
     } = parsed.data;
 
-    const date = parseTravelDateFromClient(travelDate);
-    if (!date) {
-      return NextResponse.json({ message: "Invalid travel date" }, { status: 400 });
-    }
-    if (travelDateIsBeforeLocalToday(date.toISOString())) {
-      return NextResponse.json(
-        { message: "Travel date must be today or later" },
-        { status: 400 }
-      );
-    }
-
     await DbConnect();
     const pkg = await TourPackage.findById(packageId);
     if (!pkg) {
       return NextResponse.json({ message: "Package not found" }, { status: 404 });
+    }
+
+    let date = parseTravelDateFromClient(travelDate);
+    if (!date) {
+      if (pkg.startDate) {
+        date = new Date(pkg.startDate);
+      } else if (pkg.availableDates && pkg.availableDates.length > 0) {
+        date = new Date(pkg.availableDates[0]);
+      } else {
+        date = new Date();
+      }
+    }
+
+    if (pkg.availableSeats < travelers) {
+      return NextResponse.json(
+        {
+          message:
+            pkg.availableSeats <= 0
+              ? "This tour package is currently sold out."
+              : `Cannot request ${travelers} travelers. Only ${pkg.availableSeats} seat(s) remaining for this tour.`,
+        },
+        { status: 400 }
+      );
     }
 
     const totalPriceBdt = travelers * pkg.priceBdt;
@@ -123,6 +135,8 @@ export async function POST(req: Request) {
       transactionId,
       totalPriceBdt,
     });
+
+    await TourPackage.decrementAvailableSeats(packageId, travelers);
 
     const booking = serializeBooking(created, pkg);
     return NextResponse.json({ booking }, { status: 201 });

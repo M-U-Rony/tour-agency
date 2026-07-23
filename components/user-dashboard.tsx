@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Compass, Clock, MapPin, CalendarDays } from "lucide-react";
+import { Compass, Clock, MapPin, CalendarDays, Download } from "lucide-react";
 import type { AuthUser } from "@/lib/auth-user";
 import type { BookingDTO, BookingStatus } from "@/lib/booking";
 import {
@@ -33,6 +33,7 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
   const [bookings, setBookings] = useState<BookingDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("all");
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -73,6 +74,12 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
         travelDateIsBeforeLocalToday(b.travelDate)
     );
   }, [bookings]);
+
+  const displayedBookings = useMemo(() => {
+    if (activeTab === "upcoming") return upcoming;
+    if (activeTab === "past") return past;
+    return bookings;
+  }, [activeTab, upcoming, past, bookings]);
 
   const next = upcoming[0] ?? null;
 
@@ -115,43 +122,96 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
             isNext
           />
         ) : (
-          <div className="rounded-3xl border border-dashed border-emerald-200 bg-white p-10 text-center">
-            <h3 className="text-xl font-bold">No upcoming trips</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Browse our packages and request your next adventure.
+          <div className="rounded-3xl border border-dashed border-emerald-200 bg-white p-8 text-center">
+            <h3 className="text-lg font-bold text-slate-900">No upcoming trips scheduled</h3>
+            <p className="mt-1.5 text-sm text-slate-600">
+              Browse our tour packages or request a custom trip to plan your next adventure!
             </p>
-            <Link
-              href="/tours"
-              className="mt-5 inline-block rounded-xl bg-teal-50 text-teal-900 px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-teal-100 shadow-sm"
-            >
-              Explore tours
-            </Link>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/tours"
+                className="rounded-xl bg-teal-800 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-900 shadow-sm"
+              >
+                Explore tours
+              </Link>
+              <Link
+                href="/contact"
+                className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-teal-800 transition-colors hover:bg-emerald-100"
+              >
+                Custom trip request
+              </Link>
+            </div>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Upcoming bookings</h3>
-              <Link
-                href="/tours"
-                className="text-sm font-medium text-teal-700 hover:text-teal-800 hover:underline"
-              >
-                Book another
-              </Link>
+            {/* Header & Tabs */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-100 pb-4">
+              <h3 className="text-xl font-bold text-slate-900">My Bookings</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("all")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                    activeTab === "all"
+                      ? "bg-teal-800 text-white shadow-sm"
+                      : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+                  }`}
+                >
+                  All ({bookings.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("upcoming")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                    activeTab === "upcoming"
+                      ? "bg-teal-800 text-white shadow-sm"
+                      : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+                  }`}
+                >
+                  Upcoming ({upcoming.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("past")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                    activeTab === "past"
+                      ? "bg-teal-800 text-white shadow-sm"
+                      : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+                  }`}
+                >
+                  Previous / Past ({past.length})
+                </button>
+              </div>
             </div>
 
             {loading ? (
               <div className="flex justify-center py-10">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
               </div>
-            ) : upcoming.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-emerald-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
-                No upcoming bookings yet.
-              </p>
+            ) : displayedBookings.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-emerald-200 bg-white px-6 py-12 text-center text-slate-500">
+                <p className="text-sm font-semibold text-slate-700">
+                  {activeTab === "past"
+                    ? "No previous or completed bookings found."
+                    : activeTab === "upcoming"
+                    ? "No upcoming bookings found."
+                    : "No bookings found yet."}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Book a package to start planning your next journey with us.
+                </p>
+                <Link
+                  href="/tours"
+                  className="mt-4 inline-block rounded-xl bg-teal-800 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-teal-900"
+                >
+                  Browse Packages
+                </Link>
+              </div>
             ) : (
               <div className="space-y-4">
-                {upcoming.map((b) => (
+                {displayedBookings.map((b) => (
                   <BookingRow
                     key={b.id}
                     booking={b}
@@ -163,38 +223,44 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
             )}
           </div>
 
+          {/* Right Sidebar: Summary Stats */}
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border border-emerald-100 p-6 shadow-sm">
-              <h3 className="text-lg font-bold mb-4">Past trips</h3>
-              {past.length === 0 ? (
-                <p className="text-sm text-slate-500">No past trips yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {past.slice(0, 6).map((b) => (
-                    <div
-                      key={b.id}
-                      className="flex gap-4 p-3 hover:bg-[#f4fbf8] rounded-xl transition-colors"
-                    >
-                      <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 shrink-0">
-                        <MapPin size={22} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">
-                          {b.package?.title ?? "Tour"}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {formatTravelDate(b.travelDate)} · {formatBdt(b.totalPriceBdt)}
-                        </p>
-                        <span
-                          className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_STYLE[b.status]}`}
-                        >
-                          {BOOKING_STATUS_LABEL[b.status]}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+              <h3 className="text-base font-bold text-slate-900 mb-4">Bookings Overview</h3>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-xl bg-emerald-50/70 p-3 border border-emerald-100">
+                  <p className="text-xl font-extrabold text-teal-900">{bookings.length}</p>
+                  <p className="text-[11px] font-semibold text-teal-800 mt-0.5">Total</p>
                 </div>
-              )}
+                <div className="rounded-xl bg-teal-50/70 p-3 border border-teal-100">
+                  <p className="text-xl font-extrabold text-teal-900">{upcoming.length}</p>
+                  <p className="text-[11px] font-semibold text-teal-800 mt-0.5">Upcoming</p>
+                </div>
+                <div className="rounded-xl bg-amber-50/70 p-3 border border-amber-100">
+                  <p className="text-xl font-extrabold text-amber-900">{past.length}</p>
+                  <p className="text-[11px] font-semibold text-amber-800 mt-0.5">Past</p>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-slate-100 space-y-3">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Quick Actions
+                </p>
+                <Link
+                  href="/tours"
+                  className="flex items-center justify-between rounded-xl border border-emerald-100 bg-[#f4fbf8] p-3 text-xs font-semibold text-teal-900 hover:bg-emerald-100/60 transition-colors"
+                >
+                  <span>Explore All Tour Packages</span>
+                  <span>&rarr;</span>
+                </Link>
+                <Link
+                  href="/contact"
+                  className="flex items-center justify-between rounded-xl border border-emerald-100 bg-white p-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <span>Request Custom Itinerary</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -224,9 +290,11 @@ function BookingRow({
             <h4 className="font-bold text-slate-900">{booking.package?.title || "Tour Request"}</h4>
             <p className="text-xs text-slate-500 mt-0.5">
               Travel Date: <span className="font-medium text-slate-700">{formatTravelDate(booking.travelDate)}</span>
-              {days !== null && days >= 0 && (
+              {days !== null && days >= 0 ? (
                 <span className="ml-1.5 text-teal-600 font-medium">({days === 0 ? "Today" : `in ${days} days`})</span>
-              )}
+              ) : days !== null && days < 0 ? (
+                <span className="ml-1.5 text-slate-400 font-medium">(Completed / Passed)</span>
+              ) : null}
             </p>
           </div>
         </div>
@@ -249,7 +317,7 @@ function BookingRow({
           <span className="text-slate-500">Total Price: </span>
           <span className="font-bold text-slate-900">{formatBdt(booking.totalPriceBdt)}</span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center flex-wrap">
           {booking.package && (
             <Link
               href={`/tours/${booking.package.id}`}
@@ -257,6 +325,16 @@ function BookingRow({
             >
               View tour
             </Link>
+          )}
+          {(booking.status === "confirmed" || booking.status === "completed" || booking.paymentStatus === "paid" || booking.paymentStatus === "advance_due") && (
+            <a
+              href={`/api/bookings/${booking.id}/payslip`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-800 hover:bg-teal-100 transition-colors shadow-2xs cursor-pointer"
+            >
+              <Download size={13} /> Download Payslip
+            </a>
           )}
           {booking.status === "pending" && (
             <button
@@ -268,7 +346,9 @@ function BookingRow({
               {cancelling ? "Cancelling…" : "Cancel"}
             </button>
           )}
-          {booking.status === "completed" && <ReviewPrompt booking={booking} />}
+          {(booking.status === "completed" || (booking.status !== "cancelled" && travelDateIsBeforeLocalToday(booking.travelDate))) && (
+            <ReviewPrompt booking={booking} />
+          )}
         </div>
       </div>
     </div>
@@ -348,7 +428,7 @@ function BookingCard({
             <p className="text-xs text-slate-400">Amount details</p>
             <p className="font-bold text-lg text-slate-900">{formatBdt(booking.totalPriceBdt)}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center flex-wrap">
             {booking.package && (
               <Link
                 href={`/tours/${booking.package.id}`}
@@ -356,6 +436,16 @@ function BookingCard({
               >
                 View itinerary
               </Link>
+            )}
+            {(booking.status === "confirmed" || booking.status === "completed" || booking.paymentStatus === "paid" || booking.paymentStatus === "advance_due") && (
+              <a
+                href={`/api/bookings/${booking.id}/payslip`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-bold text-teal-800 hover:bg-teal-100 transition-colors shadow-2xs cursor-pointer"
+              >
+                <Download size={15} /> Download Payslip
+              </a>
             )}
             {booking.status === "pending" && (
               <button
@@ -367,7 +457,9 @@ function BookingCard({
                 {cancelling ? "Cancelling…" : "Cancel Booking"}
               </button>
             )}
-            {booking.status === "completed" && <ReviewPrompt booking={booking} />}
+            {(booking.status === "completed" || (booking.status !== "cancelled" && travelDateIsBeforeLocalToday(booking.travelDate))) && (
+              <ReviewPrompt booking={booking} />
+            )}
           </div>
         </div>
       </div>

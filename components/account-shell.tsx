@@ -13,14 +13,18 @@ import {
   ClipboardList,
   Compass,
   ExternalLink,
+  Heart,
   LayoutDashboard,
   LogOut,
   Map as MapIcon,
   Menu,
+  MessageSquare,
+  Phone,
   Plane,
   User,
   X,
 } from "lucide-react";
+import NotificationBell from "@/components/notification-bell";
 
 type NavLink = {
   icon: React.ReactNode;
@@ -216,10 +220,15 @@ export default function AccountShell({
           href: "/admin/custom-trips",
         },
         {
+          icon: <MessageSquare size={20} />,
+          label: "Support & Messages",
+          href: "/admin/messages",
+        },
+        {
           icon: <ExternalLink size={20} />,
           label: "View public site",
           href: "/tours",
-          match: (p) => p === "/" || p === "/tours" || p.startsWith("/tours/") || p === "/contact",
+          match: (p) => p === "/" || p === "/tours" || p.startsWith("/tours/"),
         },
       ]
     : [
@@ -236,13 +245,18 @@ export default function AccountShell({
             p === "/dashboard" || p === "/user/dashboard" || p.startsWith("/user/dashboard/"),
         },
         {
+          icon: <Heart size={20} />,
+          label: "My Wishlist",
+          href: "/wishlist",
+        },
+        {
           icon: <Plane size={20} />,
           label: "My Custom Trips",
           href: "/custom-trips",
         },
         {
-          icon: <ClipboardList size={20} />,
-          label: "Request Custom Trip",
+          icon: <MessageSquare size={20} />,
+          label: "Contact Us & Support",
           href: "/contact",
         },
       ];
@@ -338,6 +352,16 @@ export default function AccountShell({
 
           <div className="flex shrink-0 items-center gap-3">
             {actions}
+            {!isAdmin && (
+              <Link
+                href="/wishlist"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-100 bg-white text-slate-600 transition-colors hover:bg-emerald-50 hover:text-rose-500"
+                title="My Wishlist"
+              >
+                <Heart size={18} />
+              </Link>
+            )}
+            <NotificationBell />
             <UserMenu user={user} onSignOut={handleSignOut} />
           </div>
         </header>

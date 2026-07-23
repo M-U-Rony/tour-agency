@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DbConnect } from "@/db/connection";
-import { CustomTripRequest } from "@/db/models";
+import { CustomTripRequest, User } from "@/db/models";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import { serializeCustomTripRequest } from "@/lib/custom-trip";
 import { customTripRequestSchema } from "@/utils/zod/types";
@@ -25,6 +25,11 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const auth = await getAuthFromCookies();
+    if (!auth) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const parsed = customTripRequestSchema.safeParse(body);
     if (!parsed.success) {
@@ -35,8 +40,16 @@ export async function POST(req: Request) {
     }
 
     await DbConnect();
+    const user = await User.findById(auth.userId);
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
     const created = await CustomTripRequest.create({
       ...parsed.data,
+      name: user.name,
+      email: user.email,
+      phone: parsed.data.phone || "",
       departureDate: new Date(parsed.data.departureDate),
       returnDate: new Date(parsed.data.returnDate),
     });

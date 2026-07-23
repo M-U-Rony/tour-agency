@@ -51,7 +51,10 @@ export const createTourPackageSchema = z.object({
     pickupInfo: z.string().max(3000).optional().default(""),
     cancellationPolicy: z.string().max(3000).optional().default(""),
     availableDates: z.array(z.string().min(1)).max(100).optional().default([]),
-    maxTravelers: z.number().int().min(1).max(1000).optional().default(20),
+    startDate: z.string().optional().default(""),
+    endDate: z.string().optional().default(""),
+    totalSeats: z.coerce.number().int().min(1).max(10000).optional().default(20),
+    availableSeats: z.coerce.number().int().min(0).max(10000).optional(),
     isActive: z.boolean().optional().default(true),
 })
 
@@ -59,7 +62,7 @@ export const updateTourPackageSchema = createTourPackageSchema.partial()
 
 export const createBookingSchema = z.object({
     packageId: z.string().min(1),
-    travelDate: z.string().min(1),
+    travelDate: z.string().optional().default(""),
     travelers: z.number().int().min(1).max(50),
     contactPhone: z.string().min(5).max(40),
     notes: z.string().max(1000).optional().default(""),
@@ -89,9 +92,9 @@ export const customTripRequestSchema = z.object({
   children: z.number().int().min(0).max(100).optional().default(0),
   budget: z.string().min(1).max(120),
   accommodation: z.string().max(120).optional().default(""),
-  name: z.string().min(1).max(120),
-  email: z.email(),
-  phone: z.string().min(5).max(40),
+  name: z.string().max(120).optional().default(""),
+  email: z.string().optional().default(""),
+  phone: z.string().max(40).optional().default(""),
   notes: z.string().max(1500).optional().default(""),
 });
 

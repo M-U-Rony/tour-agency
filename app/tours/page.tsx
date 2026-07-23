@@ -5,7 +5,7 @@ import PackageCard from "@/components/package-card";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import type { TourPackageDTO } from "@/lib/tour-package";
-import { serializeTourPackage } from "@/lib/tour-package";
+import { serializeTourPackage, isTourUpcoming } from "@/lib/tour-package";
 import { getAuthFromCookies } from "@/lib/auth-api";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,17 @@ type SearchParams = {
   duration?: string;
   travelers?: string;
   sort?: string;
+  category?: string;
 };
+
+function buildQueryString(params: Record<string, string | undefined>): string {
+  const urlParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value) urlParams.set(key, value);
+  }
+  const str = urlParams.toString();
+  return str ? `/tours?${str}` : "/tours";
+}
 
 export default async function ToursPage({
   searchParams,
@@ -30,15 +40,13 @@ export default async function ToursPage({
   const duration = (params.duration ?? "").trim();
   const travelers = Number(params.travelers ?? "");
   const sort = params.sort ?? "newest";
+  const category = (params.category ?? "upcoming").toLowerCase();
   const minPrice = Number(params.minPrice ?? "");
   const maxPrice = Number(params.maxPrice ?? "");
 
   const filter: TourPackageFilter = { isActive: { $ne: false } };
   if (location) filter.location = location;
   if (duration) filter.duration = duration;
-  if (Number.isFinite(travelers) && travelers > 0) {
-    filter.maxTravelers = { $gte: travelers };
-  }
   const priceFilter: { $gte?: number; $lte?: number } = {};
   if (Number.isFinite(minPrice) && minPrice > 0) priceFilter.$gte = minPrice;
   if (Number.isFinite(maxPrice) && maxPrice > 0) priceFilter.$lte = maxPrice;
@@ -56,6 +64,13 @@ export default async function ToursPage({
   } catch {
     packages = [];
   }
+
+  const upcomingPackages = packages.filter(isTourUpcoming);
+  const pastPackages = packages.filter((pkg) => !isTourUpcoming(pkg));
+
+  let displayedPackages = upcomingPackages;
+  if (category === "past") displayedPackages = pastPackages;
+  if (category === "all") displayedPackages = packages;
 
   const hasFilters = !!(
     location ||
@@ -79,14 +94,15 @@ export default async function ToursPage({
             Tours & packages
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Pick a trip - coastal escapes, hills, and heritage circuits across Bangladesh.
+            Explore upcoming upcoming adventures and past tour packages across Bangladesh.
           </p>
         </div>
 
         <form
-          className="mb-8 grid gap-3 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[1fr_1fr_0.8fr_0.8fr_0.8fr_auto]"
+          className="mb-6 grid gap-3 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[1fr_1fr_0.8fr_0.8fr_0.8fr_auto]"
           action="/tours"
         >
+          <input type="hidden" name="category" value={category} />
           <input
             name="location"
             defaultValue={location}
@@ -130,12 +146,48 @@ export default async function ToursPage({
           </button>
         </form>
 
-        {packages.length === 0 ? (
+        {/* Category Filter Tabs */}
+        <div className="mb-8 flex flex-wrap items-center gap-3 border-b border-emerald-100 pb-3">
+          <Link
+            href={buildQueryString({ ...params, category: "upcoming" })}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              category === "upcoming"
+                ? "bg-teal-700 text-white shadow-sm"
+                : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+            }`}
+          >
+            Upcoming Tours ({upcomingPackages.length})
+          </Link>
+          <Link
+            href={buildQueryString({ ...params, category: "past" })}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              category === "past"
+                ? "bg-teal-700 text-white shadow-sm"
+                : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+            }`}
+          >
+            Past Tours ({pastPackages.length})
+          </Link>
+          <Link
+            href={buildQueryString({ ...params, category: "all" })}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              category === "all"
+                ? "bg-teal-700 text-white shadow-sm"
+                : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+            }`}
+          >
+            All Tours ({packages.length})
+          </Link>
+        </div>
+
+        {displayedPackages.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-emerald-200 bg-white px-6 py-16 text-center">
-            <p className="text-slate-600">
-              {hasFilters
-                ? "No packages match your filters."
-                : "New tours are coming soon."}
+            <p className="text-slate-600 font-semibold">
+              {category === "past"
+                ? "No past tour packages found."
+                : category === "upcoming"
+                ? "No upcoming tour packages match your filters."
+                : "No tour packages found."}
             </p>
             <p className="mt-2 text-sm text-slate-500">
               {hasFilters ? "Try clearing some filters, or" : "In the meantime,"}{" "}
@@ -150,7 +202,7 @@ export default async function ToursPage({
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {packages.map((pkg) => (
+            {displayedPackages.map((pkg) => (
               <PackageCard key={pkg.id} pkg={pkg} />
             ))}
           </div>

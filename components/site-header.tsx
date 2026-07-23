@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, LogOut, Menu, User, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, Heart, LogOut, Menu, User, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { clientSignOut } from "@/lib/client-auth";
 import { getUserAvatarUrl } from "@/lib/user-avatar";
 import { useInsideSidebar } from "@/components/sidebar-context";
+
+import NotificationBell from "@/components/notification-bell";
 
 type Props = {
   backHref?: string;
@@ -76,6 +78,7 @@ export default function SiteHeader({
 
   const navLinks = [
     { href: "/tours", label: "Tours" },
+    ...(user?.role !== "admin" ? [{ href: "/wishlist", label: "Wishlist" }] : []),
     { href: "/contact", label: "Custom trip" },
   ];
 
@@ -111,6 +114,16 @@ export default function SiteHeader({
         </nav>
 
         <div className="flex items-center gap-2">
+          {(user || isAuthed) && user?.role !== "admin" && (
+            <Link
+              href="/wishlist"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-100 bg-white text-slate-600 transition-colors hover:bg-emerald-50 hover:text-rose-500"
+              title="My Wishlist"
+            >
+              <Heart size={18} />
+            </Link>
+          )}
+          {(user || isAuthed) && <NotificationBell />}
           {user ? (
             <div className="relative" ref={userRef}>
               <button

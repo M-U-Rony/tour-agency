@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useInsideSidebar } from "@/components/sidebar-context";
 import CustomTripForm from "@/components/custom-trip-form";
+import SupportMessagesView from "@/components/support-messages-view";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, MessageSquare, Plane } from "lucide-react";
 
 type ContactPageContentProps = {
   isAuthed: boolean;
@@ -67,11 +68,37 @@ const socials = [
 
 export default function ContactPageContent({ isAuthed }: ContactPageContentProps) {
   const isInsideSidebar = useInsideSidebar();
+  const [activeTab, setActiveTab] = useState<"messages" | "custom">("messages");
 
   if (isInsideSidebar) {
     return (
-      <div className="mx-auto max-w-4xl py-2">
-        <CustomTripForm />
+      <div className="mx-auto max-w-4xl py-2 space-y-6">
+        <div className="flex items-center gap-2 border-b border-emerald-100 pb-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab("messages")}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              activeTab === "messages"
+                ? "bg-teal-700 text-white shadow-sm"
+                : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+            }`}
+          >
+            <MessageSquare size={16} /> Contact & Support Messages
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("custom")}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              activeTab === "custom"
+                ? "bg-teal-700 text-white shadow-sm"
+                : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+            }`}
+          >
+            <Plane size={16} /> Custom Trip Request
+          </button>
+        </div>
+
+        {activeTab === "messages" ? <SupportMessagesView /> : <CustomTripForm />}
       </div>
     );
   }
@@ -84,21 +111,45 @@ export default function ContactPageContent({ isAuthed }: ContactPageContentProps
         <SiteHeader isAuthed={isAuthed} ctaHref="/tours" ctaLabel="Browse tours" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-6 pt-8 sm:px-6 lg:px-10">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-4 pt-8 sm:px-6 lg:px-10">
         <span className="inline-flex rounded-full border border-teal-200 bg-teal-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
-          Custom Trip Enquiry
+          Contact & Support
         </span>
         <h1 className="mt-4 max-w-2xl font-[Georgia,Times_New_Roman,serif] text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
-          Can&apos;t find your destination?<br />We&apos;ll plan it for you.
+          Get in touch with ExploreBD
         </h1>
         <p className="mt-4 max-w-xl text-lg leading-8 text-slate-600">
-          Our packages cover popular spots, but Bangladesh has far more to explore.
-          Fill in the form and our team will craft a personalised itinerary around your
-          exact dates, group size, and budget.
+          Send us a message or request a custom tour itinerary. Our support team responds within 24 hours.
         </p>
+
+        {/* Tab Selection */}
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab("messages")}
+            className={`flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-2xl transition-all cursor-pointer ${
+              activeTab === "messages"
+                ? "bg-teal-700 text-white shadow-md"
+                : "bg-white text-slate-700 border border-emerald-100 hover:bg-emerald-50"
+            }`}
+          >
+            <MessageSquare size={16} /> Contact & Support Messages
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("custom")}
+            className={`flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-2xl transition-all cursor-pointer ${
+              activeTab === "custom"
+                ? "bg-teal-700 text-white shadow-md"
+                : "bg-white text-slate-700 border border-emerald-100 hover:bg-emerald-50"
+            }`}
+          >
+            <Plane size={16} /> Custom Trip Request
+          </button>
+        </div>
       </div>
 
-      <main className="relative z-10 mx-auto w-full max-w-7xl flex-1 px-4 pb-20 sm:px-6 lg:px-10">
+      <main className="relative z-10 mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-6 sm:px-6 lg:px-10">
         <div className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-14">
           <aside className="space-y-8">
             <div className="rounded-[2rem] border border-white bg-white/85 p-7 shadow-[0_20px_60px_rgba(15,23,42,0.07)] backdrop-blur-xl">
@@ -137,13 +188,12 @@ export default function ContactPageContent({ isAuthed }: ContactPageContentProps
             </div>
 
             <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50/60 p-7 shadow-[0_20px_60px_rgba(16,185,129,0.07)]">
-              <h2 className="text-base font-semibold text-slate-900">Why request a custom trip?</h2>
+              <h2 className="text-base font-semibold text-slate-900">24/7 Traveler Support</h2>
               <ul className="mt-4 space-y-3 text-sm text-slate-600">
                 {[
-                  "Access any destination in Bangladesh",
-                  "Itinerary built around your group size",
-                  "Your dates, your budget, your pace",
-                  "Dedicated guide & support throughout",
+                  "Direct contact with support team",
+                  "Real-time message status & admin replies",
+                  "Tailored travel planning",
                   "Response within 24 hours",
                 ].map((point) => (
                   <li key={point} className="flex items-start gap-2">
@@ -159,7 +209,7 @@ export default function ContactPageContent({ isAuthed }: ContactPageContentProps
           </aside>
 
           <div>
-            <CustomTripForm />
+            {activeTab === "messages" ? <SupportMessagesView /> : <CustomTripForm />}
           </div>
         </div>
       </main>
@@ -170,3 +220,4 @@ export default function ContactPageContent({ isAuthed }: ContactPageContentProps
     </div>
   );
 }
+

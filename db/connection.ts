@@ -60,14 +60,29 @@ export async function DbConnect() {
             exclusions JSON,
             pickupInfo TEXT,
             cancellationPolicy TEXT,
-            availableDates JSON,
-            maxTravelers INT DEFAULT 20,
+            startDate DATETIME NULL,
+            endDate DATETIME NULL,
+            totalSeats INT DEFAULT 20,
+            availableSeats INT DEFAULT 20,
             isActive BOOLEAN DEFAULT TRUE,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_isActive (isActive)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
+
+        try {
+          await pool.query("ALTER TABLE tour_packages ADD COLUMN startDate DATETIME NULL;");
+        } catch {}
+        try {
+          await pool.query("ALTER TABLE tour_packages ADD COLUMN endDate DATETIME NULL;");
+        } catch {}
+        try {
+          await pool.query("ALTER TABLE tour_packages ADD COLUMN totalSeats INT DEFAULT 20;");
+        } catch {}
+        try {
+          await pool.query("ALTER TABLE tour_packages ADD COLUMN availableSeats INT DEFAULT 20;");
+        } catch {}
 
         await pool.query(`
           CREATE TABLE IF NOT EXISTS bookings (
@@ -156,6 +171,40 @@ export async function DbConnect() {
             INDEX idx_status (status),
             FOREIGN KEY (bookingId) REFERENCES bookings(id) ON DELETE CASCADE,
             FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS support_messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            threadId VARCHAR(100) NOT NULL,
+            userId INT NOT NULL,
+            senderRole ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            phone VARCHAR(50) DEFAULT '',
+            subject VARCHAR(255) DEFAULT 'General Inquiry',
+            message TEXT NOT NULL,
+            isReadByAdmin BOOLEAN DEFAULT FALSE,
+            isReadByUser BOOLEAN DEFAULT FALSE,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_threadId (threadId),
+            INDEX idx_userId (userId),
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS wishlists (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            userId INT NOT NULL,
+            packageId INT NOT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY idx_user_package (userId, packageId),
+            INDEX idx_userId (userId),
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (packageId) REFERENCES tour_packages(id) ON DELETE CASCADE
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
 

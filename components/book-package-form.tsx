@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Phone, Users, MessageSquare, CheckCircle } from "lucide-react";
+import { CalendarDays, Phone, Users, MessageSquare, CheckCircle, Heart } from "lucide-react";
 import { formatBdt } from "@/lib/tour-package";
 import { travelDateInputMinLocal } from "@/lib/booking";
 
@@ -11,6 +11,11 @@ type Props = {
   packageId: string;
   pricePerPerson: number;
   isAuthenticated: boolean;
+  totalSeats?: number;
+  availableSeats?: number;
+  startDate?: string;
+  endDate?: string;
+  availableDates?: string[];
   /** Admins preview listing pricing only; customer booking requests are disabled. */
   adminPreview?: boolean;
 };
@@ -19,10 +24,16 @@ export default function BookPackageForm({
   packageId,
   pricePerPerson,
   isAuthenticated,
+  totalSeats = 20,
+  availableSeats = 20,
+  startDate,
+  endDate,
+  availableDates = [],
   adminPreview = false,
 }: Props) {
   const router = useRouter();
-  const [travelDate, setTravelDate] = useState("");
+  const initialDate = startDate || (availableDates.length > 0 ? availableDates[0] : "");
+  const [travelDate, setTravelDate] = useState(initialDate);
   const [travelers, setTravelers] = useState(2);
   const [contactPhone, setContactPhone] = useState("");
   const [travelerNames, setTravelerNames] = useState("");
@@ -37,11 +48,59 @@ export default function BookPackageForm({
     null
   );
 
+  const [wishlisted, setWishlisted] = useState(false);
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    void (async () => {
+      try {
+        const res = await fetch("/api/wishlist", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          const savedIds: number[] = data.packageIds ?? [];
+          if (savedIds.map(String).includes(String(packageId))) {
+            setWishlisted(true);
+          }
+        }
+      } catch {}
+    })();
+  }, [isAuthenticated, packageId]);
+
+  async function handleToggleWishlist() {
+    if (!isAuthenticated) {
+      router.push(`/signin?next=${encodeURIComponent(`/tours/${packageId}`)}`);
+      return;
+    }
+    if (togglingWishlist) return;
+    setTogglingWishlist(true);
+    try {
+      const res = await fetch("/api/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packageId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWishlisted(data.wishlisted);
+      }
+    } catch {} finally {
+      setTogglingWishlist(false);
+    }
+  }
+
+  const isSoldOut = availableSeats <= 0;
   const total = useMemo(
     () => Math.max(0, travelers) * pricePerPerson,
     [travelers, pricePerPerson]
   );
   const minTravelDate = useMemo(() => travelDateInputMinLocal(), []);
+
+  useEffect(() => {
+    if (availableDates.length > 0 && !travelDate) {
+      setTravelDate(availableDates[0]);
+    }
+  }, [availableDates, travelDate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,6 +109,17 @@ export default function BookPackageForm({
 
     if (!isAuthenticated) {
       router.push(`/signin?next=${encodeURIComponent(`/tours/${packageId}`)}`);
+      return;
+    }
+
+    if (travelers > availableSeats) {
+      setMessage({
+        type: "err",
+        text:
+          availableSeats <= 0
+            ? "This tour package is currently sold out."
+            : `Cannot request ${travelers} travelers. Only ${availableSeats} seat(s) remaining.`,
+      });
       return;
     }
 
@@ -189,7 +259,7 @@ export default function BookPackageForm({
 
   return (
     <form onSubmit={handleSubmit} className={shellClass}>
-      <div className="mb-5 flex items-baseline justify-between gap-2">
+      <div className="mb-5 flex items-center justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             From
@@ -199,14 +269,43 @@ export default function BookPackageForm({
             <span className="text-sm font-medium text-slate-500"> / person</span>
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Total
-          </p>
-          <p className="text-xl font-bold text-teal-800">
-            {formatBdt(total)}
-          </p>
+        <div className="flex items-center gap-3">
+          {!adminPreview && (
+            <button
+              type="button"
+              onClick={handleToggleWishlist}
+              title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              className="flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-[#f4fbf8] px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-emerald-50 cursor-pointer"
+            >
+              <Heart
+                size={16}
+                className={
+                  wishlisted
+                    ? "fill-rose-500 text-rose-500"
+                    : "text-slate-500 hover:text-rose-500"
+                }
+              />
+              <span>{wishlisted ? "Saved" : "Save"}</span>
+            </button>
+          )}
+          <div className="text-right">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Total
+            </p>
+            <p className="text-xl font-bold text-teal-800">
+              {formatBdt(total)}
+            </p>
+          </div>
         </div>
+      </div>
+
+      <div className="mb-5 flex items-center justify-between rounded-xl bg-[#f4fbf8] border border-emerald-100 px-4 py-2.5 text-xs font-medium">
+        <span className="text-slate-600">Seat Availability:</span>
+        {isSoldOut ? (
+          <span className="font-extrabold text-red-600">Sold Out (0 / {totalSeats})</span>
+        ) : (
+          <span className="font-bold text-teal-800">{availableSeats} / {totalSeats} seats left</span>
+        )}
       </div>
 
       {message && (
@@ -222,49 +321,58 @@ export default function BookPackageForm({
       )}
 
       <div className="space-y-4">
-        <label className="block">
+        <div className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            <CalendarDays size={14} /> Travel date
+            <CalendarDays size={14} /> Fixed Tour Schedule
           </span>
-          <input
-            required
-            type="date"
-            min={minTravelDate}
-            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-            value={travelDate}
-            onChange={(e) => setTravelDate(e.target.value)}
-            onClick={(e) => {
-              const el = e.currentTarget as HTMLInputElement & {
-                showPicker?: () => void;
-              };
-              try {
-                el.showPicker?.();
-              } catch {
-                // ignore: some browsers block programmatic opening
-              }
-            }}
-            onFocus={(e) => {
-              const el = e.currentTarget as HTMLInputElement & {
-                showPicker?: () => void;
-              };
-              try {
-                el.showPicker?.();
-              } catch {
-                // ignore
-              }
-            }}
-          />
-        </label>
+          <div className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] p-3 text-xs font-semibold text-teal-900 space-y-1">
+            {startDate && (
+              <div>
+                <span className="text-slate-500">Start: </span>
+                {new Date(startDate).toLocaleString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
+            )}
+            {endDate && (
+              <div>
+                <span className="text-slate-500">End: </span>
+                {new Date(endDate).toLocaleString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
+            )}
+            {!startDate && !endDate && (
+              <div>
+                {travelDate
+                  ? new Date(travelDate).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Confirmed Package Departure Date"}
+              </div>
+            )}
+          </div>
+        </div>
 
         <label className="block">
           <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            <Users size={14} /> Travelers
+            <Users size={14} /> Travelers (Max {availableSeats} available)
           </span>
           <input
             required
             type="number"
             min={1}
-            max={50}
+            max={Math.max(1, availableSeats)}
             step={1}
             className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             value={travelers}
@@ -351,14 +459,22 @@ export default function BookPackageForm({
 
         <button
           type="submit"
-          disabled={submitting}
-          className="w-full rounded-xl bg-teal-700 py-3 text-sm font-semibold text-white shadow-md shadow-teal-900/20 transition-colors hover:bg-teal-800 disabled:opacity-60"
+          disabled={submitting || isSoldOut || travelers > availableSeats}
+          className={`w-full rounded-xl py-3 text-sm font-semibold text-white shadow-md transition-colors ${
+            isSoldOut || travelers > availableSeats
+              ? "bg-slate-500 hover:bg-slate-600 cursor-not-allowed"
+              : "bg-teal-700 hover:bg-teal-800 shadow-teal-900/20 cursor-pointer"
+          } disabled:opacity-60`}
         >
-          {submitting
+          {isSoldOut
+            ? "Sold Out"
+            : travelers > availableSeats
+            ? `Exceeds Available Seats (${availableSeats} max)`
+            : submitting
             ? "Submitting..."
             : isAuthenticated
-              ? "Request Booking"
-              : "Sign in to book"}
+            ? "Request Booking"
+            : "Sign in to book"}
         </button>
         <p className="text-center text-xs text-slate-500">
           Booking is a request. Choose today or a future date and our team will confirm
