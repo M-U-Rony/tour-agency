@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { DbConnect } from "@/db/connection";
-import { TourPackage, Booking, TripAnnouncement } from "@/db/models";
+import { TourPackage, Booking, TripAnnouncement, CustomTripRequest } from "@/db/models";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import { serializeTourPackage } from "@/lib/tour-package";
+import { serializeCustomTripRequest } from "@/lib/custom-trip";
 
 export async function GET() {
   try {
@@ -13,8 +14,12 @@ export async function GET() {
 
     await DbConnect();
 
-    // Find packages assigned to this tour guide
-    const packageRows = await TourPackage.find();
+    // Find packages and custom trips assigned to this tour guide
+    const [packageRows, assignedCustomTrips] = await Promise.all([
+      TourPackage.find(),
+      CustomTripRequest.find({ tourGuideId: auth.userId }),
+    ]);
+
     const assignedDocs = packageRows.filter(
       (p) => String(p.tourGuideId) === String(auth.userId)
     );
@@ -66,7 +71,10 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ tours });
+    return NextResponse.json({
+      tours,
+      customTrips: assignedCustomTrips.map(serializeCustomTripRequest),
+    });
   } catch (error) {
     console.error("GET /api/guide/tours:", error);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });

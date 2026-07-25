@@ -102,6 +102,7 @@ export const customTripRequestSchema = z.object({
 export const updateCustomTripRequestSchema = z.object({
   status: z.enum(["new", "contacted", "quoted", "closed"]).optional(),
   adminNotes: z.string().max(1500).optional(),
+  tourGuideId: z.string().nullable().optional(),
 });
 
 export const createReviewSchema = z.object({

@@ -47,6 +47,7 @@ export async function POST(req: Request) {
 
     const created = await CustomTripRequest.create({
       ...parsed.data,
+      userId: auth.userId,
       name: user.name,
       email: user.email,
       phone: parsed.data.phone || "",

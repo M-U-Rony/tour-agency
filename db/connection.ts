@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import type { RowDataPacket } from "mysql2/promise";
 
 const globalForMysql = globalThis as unknown as {
   pool: mysql.Pool | undefined;
@@ -140,11 +141,33 @@ export async function DbConnect() {
             notes TEXT,
             status ENUM('new', 'contacted', 'quoted', 'closed') DEFAULT 'new',
             adminNotes TEXT,
+            userId INT DEFAULT NULL,
+            tourGuideId INT DEFAULT NULL,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_status (status)
+            INDEX idx_status (status),
+            INDEX idx_userId (userId),
+            INDEX idx_tourGuideId (tourGuideId),
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY (tourGuideId) REFERENCES users(id) ON DELETE SET NULL
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
+
+        try {
+          const [uCols] = await pool.query<RowDataPacket[]>("SHOW COLUMNS FROM custom_trip_requests LIKE 'userId'");
+          if (!uCols.length) {
+            await pool.query("ALTER TABLE custom_trip_requests ADD COLUMN userId INT DEFAULT NULL;");
+          }
+          await pool.query("ALTER TABLE custom_trip_requests ADD CONSTRAINT fk_custom_trip_user FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL;");
+        } catch {}
+
+        try {
+          const [gCols] = await pool.query<RowDataPacket[]>("SHOW COLUMNS FROM custom_trip_requests LIKE 'tourGuideId'");
+          if (!gCols.length) {
+            await pool.query("ALTER TABLE custom_trip_requests ADD COLUMN tourGuideId INT DEFAULT NULL;");
+          }
+          await pool.query("ALTER TABLE custom_trip_requests ADD CONSTRAINT fk_custom_trip_guide FOREIGN KEY (tourGuideId) REFERENCES users(id) ON DELETE SET NULL;");
+        } catch {}
 
         await pool.query(`
           CREATE TABLE IF NOT EXISTS reviews (

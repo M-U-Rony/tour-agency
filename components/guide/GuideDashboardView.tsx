@@ -22,8 +22,11 @@ import {
   HelpCircle,
   Filter,
   CheckCircle,
+  ClipboardList,
 } from "lucide-react";
 import { formatBdt } from "@/lib/tour-package";
+import type { CustomTripRequestDTO } from "@/lib/custom-trip";
+import { formatTravelDate } from "@/lib/booking";
 
 type TripAnnouncementItem = {
   id: string;
@@ -78,6 +81,8 @@ export default function GuideDashboardView() {
   const [sending, setSending] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
+  const [customTrips, setCustomTrips] = useState<CustomTripRequestDTO[]>([]);
+
   async function loadAssignedTours() {
     setLoading(true);
     try {
@@ -86,12 +91,14 @@ export default function GuideDashboardView() {
         const data = await res.json();
         const loaded: AssignedTour[] = data.tours ?? [];
         setTours(loaded);
+        setCustomTrips(data.customTrips ?? []);
         if (loaded.length > 0 && !expandedTourId) {
           setExpandedTourId(loaded[0].id);
         }
       }
     } catch {
       setTours([]);
+      setCustomTrips([]);
     } finally {
       setLoading(false);
     }
@@ -623,6 +630,84 @@ export default function GuideDashboardView() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Assigned Custom Trips Section */}
+      {customTrips.length > 0 && (
+        <div className="space-y-4 pt-6 border-t border-emerald-100">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <ClipboardList className="text-teal-700" size={22} />
+              Assigned Custom Trip Requests ({customTrips.length})
+            </h3>
+            <span className="text-xs font-semibold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-100">
+              Tailor-made itineraries
+            </span>
+          </div>
+
+          <div className="grid gap-4">
+            {customTrips.map((ct) => {
+              const waPhone = cleanPhoneForWhatsapp(ct.phone);
+              return (
+                <div key={ct.id} className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">{ct.destination}</h4>
+                      <p className="text-xs text-slate-500">{ct.tripType} • Budget: {ct.budget}</p>
+                    </div>
+                    <span className="self-start sm:self-auto rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-800 border border-teal-100">
+                      {ct.status.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+                    <div>
+                      <span className="font-semibold text-slate-500 block uppercase tracking-wider text-[10px]">Travel Dates</span>
+                      <p className="font-bold text-slate-800 mt-0.5">
+                        {formatTravelDate(ct.departureDate)} - {formatTravelDate(ct.returnDate)}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-500 block uppercase tracking-wider text-[10px]">Travelers</span>
+                      <p className="font-bold text-slate-800 mt-0.5">
+                        {ct.travelers} Adult(s) {ct.children ? `+ ${ct.children} Child(ren)` : ""}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-500 block uppercase tracking-wider text-[10px]">Contact Info</span>
+                      <p className="font-bold text-slate-800 mt-0.5">{ct.name} ({ct.phone})</p>
+                    </div>
+                  </div>
+
+                  {ct.notes && (
+                    <div className="rounded-xl bg-[#f4fbf8] p-3 text-xs text-slate-700">
+                      <strong className="font-semibold">Notes:</strong> {ct.notes}
+                    </div>
+                  )}
+
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    <a
+                      href={`tel:${ct.phone}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors"
+                    >
+                      <Phone size={13} /> Call Traveler
+                    </a>
+                    {waPhone && (
+                      <a
+                        href={`https://wa.me/${waPhone}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100 transition-colors"
+                      >
+                        <MessageCircle size={13} /> WhatsApp
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

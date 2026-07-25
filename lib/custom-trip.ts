@@ -17,6 +17,14 @@ export type CustomTripRequestDTO = {
   notes: string;
   status: CustomTripStatus;
   adminNotes: string;
+  userId?: string | null;
+  tourGuideId?: string | null;
+  tourGuide?: {
+    id: string;
+    name: string;
+    email: string;
+    profileImage: string;
+  } | null;
   createdAt: string;
 };
 
@@ -44,6 +52,14 @@ export function serializeCustomTripRequest(doc: {
   notes?: string;
   status?: CustomTripStatus;
   adminNotes?: string;
+  userId?: unknown;
+  tourGuideId?: unknown;
+  tourGuide?: {
+    id: string;
+    name: string;
+    email: string;
+    profileImage: string;
+  } | null;
   createdAt: Date | string;
 }): CustomTripRequestDTO {
   return {
@@ -63,6 +79,9 @@ export function serializeCustomTripRequest(doc: {
     notes: doc.notes ?? "",
     status: doc.status ?? "new",
     adminNotes: doc.adminNotes ?? "",
+    userId: doc.userId ? String(doc.userId) : null,
+    tourGuideId: doc.tourGuideId ? String(doc.tourGuideId) : null,
+    tourGuide: doc.tourGuide ?? null,
     createdAt: new Date(doc.createdAt).toISOString(),
   };
 }
