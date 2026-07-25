@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DbConnect } from "@/db/connection";
-import { SupportMessage } from "@/db/models";
+import { SupportMessage, Booking, TripAnnouncement } from "@/db/models";
 import { getAuthFromCookies } from "@/lib/auth-api";
 
 export async function GET() {
@@ -30,14 +30,18 @@ export async function GET() {
 
       return NextResponse.json({ unreadCount, notifications });
     } else {
-      const unreadCount = await SupportMessage.getUnreadCountForUser(auth.userId);
-      const userMessages = await SupportMessage.find({ userId: auth.userId });
+      const [unreadCount, userMessages, userBookings] = await Promise.all([
+        SupportMessage.getUnreadCountForUser(auth.userId),
+        SupportMessage.find({ userId: auth.userId }),
+        Booking.find({ userId: auth.userId }),
+      ]);
+
       const unreadReplies = userMessages.filter(
         (m) => m.senderRole === "admin" && !m.isReadByUser
       );
 
-      const notifications = unreadReplies.map((m) => ({
-        id: String(m.id),
+      const supportNotifications = unreadReplies.map((m) => ({
+        id: `msg-${m.id}`,
         title: "New reply from Support",
         subtitle: m.subject || "Re: Inquiry",
         message: m.message,
@@ -45,7 +49,26 @@ export async function GET() {
         link: "/contact",
       }));
 
-      return NextResponse.json({ unreadCount, notifications });
+      // Fetch broadcast announcements for user's booked packages
+      const bookedPackageIds = Array.from(new Set(userBookings.map((b) => b.packageId)));
+      const announcements = await TripAnnouncement.findByPackageIds(bookedPackageIds);
+
+      const announcementNotifications = announcements.map((a) => ({
+        id: `ann-${a.id}`,
+        title: `📢 Update from Tour Guide (${a.guideName || "Guide"})`,
+        subtitle: a.title,
+        message: a.message,
+        createdAt: a.createdAt.toISOString(),
+        link: "/dashboard",
+      }));
+
+      const allNotifications = [...supportNotifications, ...announcementNotifications].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      const totalUnread = unreadCount + announcements.length;
+
+      return NextResponse.json({ unreadCount: totalUnread, notifications: allNotifications });
     }
   } catch (error) {
     console.error("GET notifications:", error);

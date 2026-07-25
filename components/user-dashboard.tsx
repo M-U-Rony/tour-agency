@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Compass, Clock, MapPin, CalendarDays, Download } from "lucide-react";
+import { Compass, Clock, MapPin, CalendarDays, Download, Mail, UserCheck, Megaphone } from "lucide-react";
 import type { AuthUser } from "@/lib/auth-user";
 import type { BookingDTO, BookingStatus } from "@/lib/booking";
 import {
@@ -312,6 +312,43 @@ function BookingRow({
 
       <BookingTimeline booking={booking} />
 
+      {booking.package?.tourGuide && (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-teal-100 bg-[#f4fbf8] p-3 text-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {booking.package.tourGuide.profileImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={booking.package.tourGuide.profileImage}
+                alt={booking.package.tourGuide.name}
+                className="h-8 w-8 rounded-full object-cover border border-emerald-100 shrink-0"
+              />
+            ) : (
+              <div className="h-8 w-8 shrink-0 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-xs">
+                {booking.package.tourGuide.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700 block">
+                Assigned Tour Guide
+              </span>
+              <p className="font-bold text-slate-900 truncate">
+                {booking.package.tourGuide.name}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={`mailto:${booking.package.tourGuide.email}`}
+              className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-white px-2.5 py-1 text-xs font-semibold text-teal-800 hover:bg-teal-50 transition-colors"
+            >
+              <Mail size={12} /> Contact Guide
+            </a>
+          </div>
+        </div>
+      )}
+
+      <PackageAnnouncements packageId={booking.packageId} />
+
       <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
         <div className="text-sm">
           <span className="text-slate-500">Total Price: </span>
@@ -421,6 +458,41 @@ function BookingCard({
               </p>
             </div>
           </div>
+
+          {booking.package?.tourGuide && (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-teal-100 bg-[#f4fbf8] p-3 text-xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {booking.package.tourGuide.profileImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={booking.package.tourGuide.profileImage}
+                    alt={booking.package.tourGuide.name}
+                    className="h-8 w-8 rounded-full object-cover border border-emerald-100 shrink-0"
+                  />
+                ) : (
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-xs">
+                    {booking.package.tourGuide.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700 block">
+                    Assigned Tour Guide
+                  </span>
+                  <p className="font-bold text-slate-900 truncate">
+                    {booking.package.tourGuide.name}
+                  </p>
+                </div>
+              </div>
+              <a
+                href={`mailto:${booking.package.tourGuide.email}`}
+                className="inline-flex items-center gap-1 shrink-0 rounded-lg border border-teal-200 bg-white px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-50 transition-colors"
+              >
+                <Mail size={12} /> Contact Guide
+              </a>
+            </div>
+          )}
+
+          <PackageAnnouncements packageId={booking.packageId} />
         </div>
 
         <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-4 flex-wrap">
@@ -581,6 +653,49 @@ function ReviewPrompt({ booking }: { booking: BookingDTO }) {
         className="mt-2 w-full resize-y rounded-lg border border-emerald-100 bg-white px-3 py-2 text-xs outline-none focus:border-emerald-500"
       />
       {message && <p className="mt-2 text-xs text-slate-500">{message}</p>}
+    </div>
+  );
+}
+
+function PackageAnnouncements({ packageId }: { packageId: string }) {
+  const [announcements, setAnnouncements] = useState<{ id: string; title: string; message: string; createdAt: string; guideName?: string }[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/guide/broadcast?packageId=${packageId}`, { credentials: "include" });
+        if (res.ok && active) {
+          const data = await res.json();
+          setAnnouncements(data.announcements ?? []);
+        }
+      } catch {}
+    })();
+    return () => {
+      active = false;
+    };
+  }, [packageId]);
+
+  if (announcements.length === 0) return null;
+
+  return (
+    <div className="mt-3 rounded-xl border border-teal-200 bg-teal-50/70 p-3 space-y-2 text-xs">
+      <div className="flex items-center gap-1.5 font-bold text-teal-900 uppercase tracking-wider text-[10px]">
+        <Megaphone size={13} className="text-teal-700" /> Trip Notices & Announcements ({announcements.length})
+      </div>
+      <div className="space-y-2">
+        {announcements.map((ann) => (
+          <div key={ann.id} className="rounded-lg bg-white p-2.5 border border-teal-100 shadow-2xs">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <h5 className="font-bold text-slate-900">{ann.title}</h5>
+              <span className="text-[10px] text-slate-400">
+                {new Date(ann.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
+            <p className="text-slate-600 whitespace-pre-wrap">{ann.message}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

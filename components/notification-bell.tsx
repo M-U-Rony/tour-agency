@@ -60,6 +60,7 @@ export default function NotificationBell() {
   }, [open]);
 
   async function markAllAsRead() {
+    setUnreadCount(0);
     try {
       await fetch("/api/notifications", {
         method: "POST",
@@ -67,8 +68,6 @@ export default function NotificationBell() {
         credentials: "include",
         body: JSON.stringify({}),
       });
-      setUnreadCount(0);
-      setNotifications([]);
     } catch {
       // no-op
     }
@@ -76,6 +75,7 @@ export default function NotificationBell() {
 
   async function handleNotificationClick(item: NotificationItem) {
     setOpen(false);
+    setUnreadCount(0);
     try {
       await fetch("/api/notifications", {
         method: "POST",
@@ -83,7 +83,6 @@ export default function NotificationBell() {
         credentials: "include",
         body: JSON.stringify({}),
       });
-      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch {
       // no-op
     }
@@ -95,8 +94,11 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => {
-          setOpen((prev) => !prev);
-          if (!open) void fetchNotifications();
+          const nextState = !open;
+          setOpen(nextState);
+          if (nextState) {
+            void markAllAsRead();
+          }
         }}
         className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-100 bg-white text-slate-600 transition-colors hover:bg-emerald-50 hover:text-teal-800 cursor-pointer focus:outline-none"
         aria-label="Notifications"

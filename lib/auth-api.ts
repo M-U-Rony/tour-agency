@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-export type AuthJwt = { userId: string; role: "user" | "admin" };
+export type AuthJwt = { userId: string; role: "user" | "admin" | "tour_guide" };
 
 export async function getAuthFromCookies(): Promise<AuthJwt | null> {
   const cookieStore = await cookies();
@@ -14,7 +14,12 @@ export async function getAuthFromCookies(): Promise<AuthJwt | null> {
     };
     const userId = decoded.id != null ? String(decoded.id) : "";
     if (!userId) return null;
-    const role = decoded.role === "admin" ? "admin" : "user";
+    const role =
+      decoded.role === "admin"
+        ? "admin"
+        : decoded.role === "tour_guide"
+        ? "tour_guide"
+        : "user";
     return { userId, role };
   } catch {
     return null;

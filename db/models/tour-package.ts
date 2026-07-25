@@ -23,6 +23,13 @@ export type TourPackageRow = {
   endDate?: Date;
   totalSeats: number;
   availableSeats: number;
+  tourGuideId?: number | null;
+  tourGuide?: {
+    id: number;
+    name: string;
+    email: string;
+    profileImage: string;
+  } | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -44,6 +51,7 @@ function normalizePackageRow(row: any): TourPackageRow {
   norm.rating = Number(norm.rating);
   norm.totalSeats = Number(norm.totalSeats ?? 20);
   norm.availableSeats = Number(norm.availableSeats ?? norm.totalSeats ?? 20);
+  norm.tourGuideId = norm.tourGuideId ? Number(norm.tourGuideId) : null;
   norm.isActive = Boolean(norm.isActive);
   norm.galleryUrls = parseJsonField<string[]>(norm.galleryUrls, []);
   norm.itinerary = parseJsonField<string[]>(norm.itinerary, []);
@@ -53,6 +61,18 @@ function normalizePackageRow(row: any): TourPackageRow {
   norm.availableDates = rawDates.map((d) => new Date(d));
   if (norm.startDate) norm.startDate = new Date(norm.startDate);
   if (norm.endDate) norm.endDate = new Date(norm.endDate);
+
+  if (row.g_id) {
+    norm.tourGuide = {
+      id: Number(row.g_id),
+      name: String(row.g_name ?? ""),
+      email: String(row.g_email ?? ""),
+      profileImage: String(row.g_profileImage ?? ""),
+    };
+  } else {
+    norm.tourGuide = null;
+  }
+
   return norm;
 }
 
@@ -71,6 +91,9 @@ async function ensureColumns() {
   try {
     await pool.query("ALTER TABLE tour_packages ADD COLUMN availableSeats INT DEFAULT 20;");
   } catch {}
+  try {
+    await pool.query("ALTER TABLE tour_packages ADD COLUMN tourGuideId INT DEFAULT NULL;");
+  } catch {}
   columnsEnsured = true;
 }
 
@@ -87,46 +110,49 @@ export const TourPackage = {
 
     if (filter.isActive !== undefined) {
       if (typeof filter.isActive === "boolean") {
-        whereClauses.push("isActive = ?");
+        whereClauses.push("tp.isActive = ?");
         values.push(filter.isActive);
       } else if (filter.isActive.$ne !== undefined) {
-        whereClauses.push("isActive != ?");
+        whereClauses.push("tp.isActive != ?");
         values.push(filter.isActive.$ne);
       }
     }
 
     if (filter.location) {
       if (typeof filter.location === "string") {
-        whereClauses.push("location LIKE ?");
+        whereClauses.push("tp.location LIKE ?");
         values.push(`%${filter.location}%`);
       }
     }
 
     if (filter.duration) {
       if (typeof filter.duration === "string") {
-        whereClauses.push("duration LIKE ?");
+        whereClauses.push("tp.duration LIKE ?");
         values.push(`%${filter.duration}%`);
       }
     }
 
     if (filter.priceBdt && typeof filter.priceBdt === "object") {
       if (filter.priceBdt.$gte !== undefined) {
-        whereClauses.push("priceBdt >= ?");
+        whereClauses.push("tp.priceBdt >= ?");
         values.push(filter.priceBdt.$gte);
       }
       if (filter.priceBdt.$lte !== undefined) {
-        whereClauses.push("priceBdt <= ?");
+        whereClauses.push("tp.priceBdt <= ?");
         values.push(filter.priceBdt.$lte);
       }
     }
 
     if (filter._id && Array.isArray(filter._id.$in) && filter._id.$in.length > 0) {
       const placeholders = filter._id.$in.map(() => "?").join(",");
-      whereClauses.push(`id IN (${placeholders})`);
+      whereClauses.push(`tp.id IN (${placeholders})`);
       values.push(...filter._id.$in.map(Number));
     }
 
-    let sql = "SELECT * FROM tour_packages";
+    let sql = `SELECT tp.*, u.id as g_id, u.name as g_name, u.email as g_email, u.profileImage as g_profileImage 
+               FROM tour_packages tp 
+               LEFT JOIN users u ON tp.tourGuideId = u.id`;
+
     if (whereClauses.length > 0) {
       sql += " WHERE " + whereClauses.join(" AND ");
     }
@@ -136,13 +162,13 @@ export const TourPackage = {
       const orderParts: string[] = [];
       for (const [key, val] of Object.entries(sortObj)) {
         const dir = val === 1 ? "ASC" : "DESC";
-        orderParts.push(`${key} ${dir}`);
+        orderParts.push(`tp.${key} ${dir}`);
       }
       if (orderParts.length > 0) {
         sql += " ORDER BY " + orderParts.join(", ");
       }
     } else {
-      sql += " ORDER BY id DESC";
+      sql += " ORDER BY tp.id DESC";
     }
 
     if (options?.limit) {
@@ -159,7 +185,10 @@ export const TourPackage = {
     const numId = Number(id);
     if (Number.isNaN(numId)) return null;
     const [rows] = await pool.query<RowDataPacket[]>(
-      "SELECT * FROM tour_packages WHERE id = ? LIMIT 1",
+      `SELECT tp.*, u.id as g_id, u.name as g_name, u.email as g_email, u.profileImage as g_profileImage 
+       FROM tour_packages tp 
+       LEFT JOIN users u ON tp.tourGuideId = u.id 
+       WHERE tp.id = ? LIMIT 1`,
       [numId]
     );
     if (!rows.length) return null;
@@ -184,6 +213,7 @@ export const TourPackage = {
     endDate?: Date | string;
     totalSeats?: number;
     availableSeats?: number;
+    tourGuideId?: number | null;
     isActive?: boolean;
     rating?: number;
   }): Promise<TourPackageRow> {
@@ -192,11 +222,12 @@ export const TourPackage = {
     const endDateVal = data.endDate ? new Date(data.endDate) : null;
     const totalSeats = data.totalSeats ?? 20;
     const availableSeats = data.availableSeats ?? totalSeats;
+    const tourGuideId = data.tourGuideId ? Number(data.tourGuideId) : null;
 
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO tour_packages 
-      (title, location, duration, priceBdt, rating, shortDescription, imageUrl, galleryUrls, itinerary, inclusions, exclusions, pickupInfo, cancellationPolicy, availableDates, startDate, endDate, totalSeats, availableSeats, isActive)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (title, location, duration, priceBdt, rating, shortDescription, imageUrl, galleryUrls, itinerary, inclusions, exclusions, pickupInfo, cancellationPolicy, availableDates, startDate, endDate, totalSeats, availableSeats, tourGuideId, isActive)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.title,
         data.location,
@@ -216,6 +247,7 @@ export const TourPackage = {
         endDateVal,
         totalSeats,
         availableSeats,
+        tourGuideId,
         data.isActive ?? true,
       ]
     );
@@ -246,6 +278,7 @@ export const TourPackage = {
       endDate: Date | string;
       totalSeats: number;
       availableSeats: number;
+      tourGuideId: number | null;
       isActive: boolean;
     }>
   ): Promise<TourPackageRow | null> {
@@ -283,6 +316,10 @@ export const TourPackage = {
     }
     if (data.totalSeats !== undefined) { fields.push("totalSeats = ?"); values.push(data.totalSeats); }
     if (data.availableSeats !== undefined) { fields.push("availableSeats = ?"); values.push(data.availableSeats); }
+    if (data.tourGuideId !== undefined) {
+      fields.push("tourGuideId = ?");
+      values.push(data.tourGuideId ? Number(data.tourGuideId) : null);
+    }
     if (data.isActive !== undefined) { fields.push("isActive = ?"); values.push(data.isActive); }
 
     if (fields.length === 0) return TourPackage.findById(numId);

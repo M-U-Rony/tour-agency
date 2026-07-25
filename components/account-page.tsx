@@ -8,7 +8,7 @@ import { useAuthUser } from "@/hooks/use-auth-user";
 
 type AccountPageProps = {
   title: string;
-  requireRole?: "admin" | "user";
+  requireRole?: "admin" | "user" | "tour_guide";
   redirectTo?: string;
   actions?: React.ReactNode;
   wide?: boolean;
@@ -36,6 +36,10 @@ export default function AccountPage({
       router.replace(redirectTo ?? "/dashboard");
       return;
     }
+    if (requireRole === "tour_guide" && user.role !== "tour_guide") {
+      router.replace(redirectTo ?? "/dashboard");
+      return;
+    }
     if (requireRole === "user" && user.role === "admin") {
       router.replace(redirectTo ?? "/admin/dashboard");
     }
@@ -46,6 +50,10 @@ export default function AccountPage({
   }
 
   if (requireRole === "admin" && user.role !== "admin") {
+    return <LoadingSpinner fullScreen />;
+  }
+
+  if (requireRole === "tour_guide" && user.role !== "tour_guide") {
     return <LoadingSpinner fullScreen />;
   }
 

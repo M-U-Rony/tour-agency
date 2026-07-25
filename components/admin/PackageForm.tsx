@@ -21,6 +21,7 @@ const emptyForm = {
   endDate: "",
   totalSeats: "20",
   availableSeats: "20",
+  tourGuideId: "",
   isActive: true,
 };
 
@@ -48,6 +49,8 @@ export default function PackageForm({
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [tourGuides, setTourGuides] = useState<{ id: number; name: string; email: string }[]>([]);
   const [message, setMessage] = useState<{
     type: "ok" | "err";
     text: string;
@@ -58,6 +61,18 @@ export default function PackageForm({
   const formSectionRef = useRef<HTMLElement | null>(null);
 
   const isEditing = editingPkg !== null;
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/tour-guides", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          setTourGuides(data.guides ?? []);
+        }
+      } catch {}
+    })();
+  }, []);
 
   useEffect(() => {
     if (editingPkg) {
@@ -83,6 +98,7 @@ export default function PackageForm({
           : "",
         totalSeats: String(total),
         availableSeats: String(editingPkg.availableSeats ?? total),
+        tourGuideId: editingPkg.tourGuideId ? String(editingPkg.tourGuideId) : "",
         isActive: editingPkg.isActive ?? true,
       });
       setMessage(null);
@@ -199,6 +215,9 @@ export default function PackageForm({
       cancellationPolicy: form.cancellationPolicy.trim(),
       startDate: form.startDate,
       endDate: form.endDate,
+      totalSeats: Number(form.totalSeats),
+      availableSeats: Number(form.availableSeats),
+      tourGuideId: form.tourGuideId ? Number(form.tourGuideId) : null,
       isActive: form.isActive,
     };
 
@@ -580,6 +599,29 @@ export default function PackageForm({
             value={form.availableSeats}
             onChange={(e) => setForm({ ...form, availableSeats: e.target.value })}
           />
+        </label>
+
+        <label className="sm:col-span-2">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Assign Tour Guide (Optional)
+          </span>
+          <select
+            value={form.tourGuideId}
+            onChange={(e) => setForm({ ...form, tourGuideId: e.target.value })}
+            className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-3 text-sm text-slate-900 outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 cursor-pointer"
+          >
+            <option value="">-- No guide assigned yet --</option>
+            {tourGuides.map((guide) => (
+              <option key={guide.id} value={guide.id}>
+                {guide.name} ({guide.email})
+              </option>
+            ))}
+          </select>
+          {tourGuides.length === 0 && (
+            <p className="mt-1.5 text-xs text-slate-500">
+              No tour guides available yet. You can promote users to Tour Guides from the <strong>Tour Guides</strong> section in the admin sidebar.
+            </p>
+          )}
         </label>
 
         <div className="sm:col-span-2 flex flex-wrap gap-3">

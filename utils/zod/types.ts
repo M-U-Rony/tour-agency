@@ -55,6 +55,7 @@ export const createTourPackageSchema = z.object({
     endDate: z.string().optional().default(""),
     totalSeats: z.coerce.number().int().min(1).max(10000).optional().default(20),
     availableSeats: z.coerce.number().int().min(0).max(10000).optional(),
+    tourGuideId: z.coerce.number().int().nullable().optional(),
     isActive: z.boolean().optional().default(true),
 })
 

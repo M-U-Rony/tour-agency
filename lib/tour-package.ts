@@ -18,6 +18,13 @@ export type TourPackageDTO = {
   endDate?: string;
   totalSeats?: number;
   availableSeats?: number;
+  tourGuideId?: number | null;
+  tourGuide?: {
+    id: number;
+    name: string;
+    email: string;
+    profileImage: string;
+  } | null;
   isActive?: boolean;
 };
 
@@ -49,6 +56,13 @@ export function serializeTourPackage(doc: {
   endDate?: Date | string;
   totalSeats?: number;
   availableSeats?: number;
+  tourGuideId?: number | null;
+  tourGuide?: {
+    id: number;
+    name: string;
+    email: string;
+    profileImage: string;
+  } | null;
   isActive?: boolean;
 }): TourPackageDTO {
   const total = doc.totalSeats ?? 20;
@@ -72,6 +86,8 @@ export function serializeTourPackage(doc: {
     endDate: doc.endDate ? toIso(doc.endDate) : undefined,
     totalSeats: total,
     availableSeats: doc.availableSeats ?? total,
+    tourGuideId: doc.tourGuideId ?? null,
+    tourGuide: doc.tourGuide ?? null,
     isActive: doc.isActive ?? true,
   };
 }

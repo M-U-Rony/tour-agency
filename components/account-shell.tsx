@@ -22,6 +22,7 @@ import {
   Phone,
   Plane,
   User,
+  UserCheck,
   X,
 } from "lucide-react";
 import NotificationBell from "@/components/notification-bell";
@@ -191,6 +192,7 @@ export default function AccountShell({
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isAdmin = user.role === "admin";
+  const isTourGuide = user.role === "tour_guide";
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -223,6 +225,26 @@ export default function AccountShell({
           icon: <MessageSquare size={20} />,
           label: "Support & Messages",
           href: "/admin/messages",
+        },
+        {
+          icon: <UserCheck size={20} />,
+          label: "Tour Guides",
+          href: "/admin/tour-guides",
+        },
+        {
+          icon: <ExternalLink size={20} />,
+          label: "View public site",
+          href: "/tours",
+          match: (p) => p === "/" || p === "/tours" || p.startsWith("/tours/"),
+        },
+      ]
+    : isTourGuide
+    ? [
+        {
+          icon: <Compass size={20} />,
+          label: "My Assigned Tours",
+          href: "/guide/dashboard",
+          match: (p) => p === "/guide/dashboard" || p.startsWith("/guide/"),
         },
         {
           icon: <ExternalLink size={20} />,

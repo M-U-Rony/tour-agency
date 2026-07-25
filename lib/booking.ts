@@ -98,6 +98,12 @@ export type BookingDTO = {
     duration: string;
     imageUrl: string;
     priceBdt: number;
+    tourGuide?: {
+      id: number;
+      name: string;
+      email: string;
+      profileImage: string;
+    } | null;
   } | null;
   user?: {
     id: string;
@@ -113,6 +119,12 @@ type RawPackage = {
   duration?: string;
   imageUrl?: string;
   priceBdt?: number;
+  tourGuide?: {
+    id: number;
+    name: string;
+    email: string;
+    profileImage: string;
+  } | null;
 };
 
 type RawUser = {
@@ -176,6 +188,7 @@ export function serializeBooking(
           duration: pkg.duration ?? "",
           imageUrl: pkg.imageUrl ?? "",
           priceBdt: pkg.priceBdt ?? 0,
+          tourGuide: pkg.tourGuide ?? null,
         }
       : null,
     user: user

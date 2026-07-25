@@ -8,7 +8,7 @@ export type UserRow = {
   name: string;
   email: string;
   password: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "tour_guide";
   profileImage: string;
   profilePage: string;
   createdAt: Date;
@@ -58,7 +58,7 @@ export const User = {
     name: string;
     email: string;
     password: string;
-    role?: "user" | "admin";
+    role?: "user" | "admin" | "tour_guide";
     profileImage?: string;
     profilePage?: string;
   }): Promise<UserRow> {
@@ -80,7 +80,7 @@ export const User = {
       name: string;
       email: string;
       password: string;
-      role: "user" | "admin";
+      role: "user" | "admin" | "tour_guide";
       profileImage: string;
       profilePage: string;
     }>
@@ -103,5 +103,12 @@ export const User = {
     values.push(numId);
     await pool.query(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`, values);
     return User.findById(numId);
+  },
+  async findByRole(role: "user" | "admin" | "tour_guide"): Promise<UserRow[]> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      "SELECT * FROM users WHERE role = ? ORDER BY createdAt DESC",
+      [role]
+    );
+    return rows.map((r) => normalizeRow(r as UserRow));
   },
 };

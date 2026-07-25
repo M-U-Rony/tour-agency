@@ -2,6 +2,8 @@ import { pool } from "../connection";
 import { RowDataPacket, ResultSetHeader } from "mysql2/promise";
 import { parseJsonField, normalizeRow } from "./utils";
 
+export type AttendanceStatus = "unchecked" | "attending" | "not_coming";
+
 export type BookingRow = {
   id: number;
   _id: number;
@@ -18,6 +20,7 @@ export type BookingRow = {
   paymentMethod: string;
   transactionId: string;
   adminNotes: string;
+  attendanceStatus: AttendanceStatus;
   totalPriceBdt: number;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +32,7 @@ function normalizeBookingRow(row: any): BookingRow {
   norm.packageId = Number(norm.packageId);
   norm.travelers = Number(norm.travelers);
   norm.totalPriceBdt = Number(norm.totalPriceBdt);
+  norm.attendanceStatus = (norm.attendanceStatus as AttendanceStatus) || "unchecked";
   norm.travelerNames = parseJsonField<string[]>(norm.travelerNames, []);
   norm.travelDate = new Date(norm.travelDate);
   norm.createdAt = new Date(norm.createdAt);
@@ -37,7 +41,7 @@ function normalizeBookingRow(row: any): BookingRow {
 }
 
 export const Booking = {
-  async find(filter: { userId?: string | number } = {}): Promise<BookingRow[]> {
+  find: async (filter: { userId?: string | number } = {}): Promise<BookingRow[]> => {
     if (filter.userId !== undefined) {
       const numUserId = Number(filter.userId);
       if (Number.isNaN(numUserId)) return [];
@@ -53,7 +57,7 @@ export const Booking = {
     return rows.map(normalizeBookingRow);
   },
 
-  async findById(id: string | number): Promise<BookingRow | null> {
+  findById: async (id: string | number): Promise<BookingRow | null> => {
     const numId = Number(id);
     if (Number.isNaN(numId)) return null;
     const [rows] = await pool.query<RowDataPacket[]>(
@@ -64,7 +68,7 @@ export const Booking = {
     return normalizeBookingRow(rows[0]);
   },
 
-  async create(data: {
+  create: async (data: {
     userId: string | number;
     packageId: string | number;
     travelDate: Date | string;
@@ -79,7 +83,7 @@ export const Booking = {
     transactionId?: string;
     adminNotes?: string;
     totalPriceBdt: number;
-  }): Promise<BookingRow> {
+  }): Promise<BookingRow> => {
     const travelDateStr = new Date(data.travelDate).toISOString().slice(0, 19).replace("T", " ");
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO bookings 
@@ -108,7 +112,7 @@ export const Booking = {
     return created;
   },
 
-  async findByIdAndUpdate(
+  findByIdAndUpdate: async (
     id: string | number,
     data: Partial<{
       status: "pending" | "confirmed" | "cancelled" | "completed";
@@ -117,7 +121,7 @@ export const Booking = {
       transactionId: string;
       adminNotes: string;
     }>
-  ): Promise<BookingRow | null> {
+  ): Promise<BookingRow | null> => {
     const numId = Number(id);
     if (Number.isNaN(numId)) return null;
 
@@ -134,6 +138,38 @@ export const Booking = {
 
     values.push(numId);
     await pool.query(`UPDATE bookings SET ${fields.join(", ")} WHERE id = ?`, values);
+    return Booking.findById(numId);
+  },
+
+  findByPackageIds: async (packageIds: number[]): Promise<(BookingRow & { userName: string; userEmail: string })[]> => {
+    if (!packageIds.length) return [];
+    const placeholders = packageIds.map(() => "?").join(",");
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT b.*, u.name as userName, u.email as userEmail 
+       FROM bookings b 
+       LEFT JOIN users u ON b.userId = u.id 
+       WHERE b.packageId IN (${placeholders}) 
+       ORDER BY b.createdAt DESC`,
+      packageIds
+    );
+    return rows.map((r) => {
+      const norm = normalizeBookingRow(r) as any;
+      norm.userName = String(r.userName ?? "");
+      norm.userEmail = String(r.userEmail ?? "");
+      return norm;
+    });
+  },
+
+  updateAttendanceStatus: async (
+    id: string | number,
+    attendanceStatus: "unchecked" | "attending" | "not_coming"
+  ): Promise<BookingRow | null> => {
+    const numId = Number(id);
+    if (Number.isNaN(numId)) return null;
+    await pool.query("UPDATE bookings SET attendanceStatus = ? WHERE id = ?", [
+      attendanceStatus,
+      numId,
+    ]);
     return Booking.findById(numId);
   },
 };

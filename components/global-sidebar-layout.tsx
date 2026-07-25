@@ -18,6 +18,7 @@ export default function GlobalSidebarLayout({
   const isAuthRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/admin") ||
+    pathname.startsWith("/guide") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/custom-trips") ||
     pathname.startsWith("/user/dashboard") ||

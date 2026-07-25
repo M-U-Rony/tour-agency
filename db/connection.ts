@@ -36,7 +36,7 @@ export async function DbConnect() {
             name VARCHAR(255) NOT NULL,
             email VARCHAR(255) NOT NULL UNIQUE,
             password VARCHAR(255) NOT NULL,
-            role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+            role ENUM('user', 'admin', 'tour_guide') NOT NULL DEFAULT 'user',
             profileImage VARCHAR(1000) DEFAULT '',
             profilePage VARCHAR(1000) DEFAULT '',
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -64,10 +64,12 @@ export async function DbConnect() {
             endDate DATETIME NULL,
             totalSeats INT DEFAULT 20,
             availableSeats INT DEFAULT 20,
+            tourGuideId INT DEFAULT NULL,
             isActive BOOLEAN DEFAULT TRUE,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_isActive (isActive)
+            INDEX idx_isActive (isActive),
+            FOREIGN KEY (tourGuideId) REFERENCES users(id) ON DELETE SET NULL
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
 
@@ -82,6 +84,9 @@ export async function DbConnect() {
         } catch {}
         try {
           await pool.query("ALTER TABLE tour_packages ADD COLUMN availableSeats INT DEFAULT 20;");
+        } catch {}
+        try {
+          await pool.query("ALTER TABLE tour_packages ADD COLUMN tourGuideId INT DEFAULT NULL;");
         } catch {}
 
         await pool.query(`
@@ -100,6 +105,7 @@ export async function DbConnect() {
             paymentMethod VARCHAR(100) DEFAULT '',
             transactionId VARCHAR(255) DEFAULT '',
             adminNotes TEXT,
+            attendanceStatus ENUM('unchecked', 'attending', 'not_coming') DEFAULT 'unchecked',
             totalPriceBdt DECIMAL(12, 2) NOT NULL,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -111,6 +117,10 @@ export async function DbConnect() {
             FOREIGN KEY (packageId) REFERENCES tour_packages(id) ON DELETE CASCADE
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
+
+        try {
+          await pool.query("ALTER TABLE bookings ADD COLUMN attendanceStatus ENUM('unchecked', 'attending', 'not_coming') DEFAULT 'unchecked';");
+        } catch {}
 
         await pool.query(`
           CREATE TABLE IF NOT EXISTS custom_trip_requests (
@@ -207,6 +217,30 @@ export async function DbConnect() {
             FOREIGN KEY (packageId) REFERENCES tour_packages(id) ON DELETE CASCADE
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
+
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS trip_announcements (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            packageId INT NOT NULL,
+            guideId INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            message TEXT NOT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_packageId (packageId),
+            FOREIGN KEY (packageId) REFERENCES tour_packages(id) ON DELETE CASCADE,
+            FOREIGN KEY (guideId) REFERENCES users(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+
+        // Migration: ensure role column ENUM includes 'tour_guide'
+        try {
+          await pool.query(`
+            ALTER TABLE users MODIFY COLUMN role ENUM('user', 'admin', 'tour_guide') NOT NULL DEFAULT 'user'
+          `);
+        } catch (err) {
+          // Log migration error if any
+          console.log("Migration notice for users.role ENUM:", err);
+        }
 
         globalForMysql.initialized = true;
       } catch (err) {
