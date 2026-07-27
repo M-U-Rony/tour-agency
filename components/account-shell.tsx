@@ -118,7 +118,13 @@ function UserMenu({ user, onSignOut }: { user: AuthUser; onSignOut: () => void }
         />
         <div className="hidden text-left md:block">
           <p className="max-w-[120px] truncate font-medium leading-tight">{user.username}</p>
-          <p className="text-xs text-slate-500">{isAdmin ? "Administrator" : "Explorer"}</p>
+          <p className="text-xs text-slate-500">
+            {user.role === "admin"
+              ? "Administrator"
+              : user.role === "tour_guide"
+              ? "Tour Guide"
+              : "Explorer"}
+          </p>
         </div>
         <ChevronDown className="hidden h-4 w-4 text-slate-400 md:block" />
       </button>

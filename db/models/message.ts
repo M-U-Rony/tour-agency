@@ -143,6 +143,23 @@ export const SupportMessage = {
     }
   },
 
+  async markAllAsRead(role: "user" | "admin", userId?: string | number): Promise<void> {
+    await ensureTable();
+    if (role === "admin") {
+      await pool.query(
+        "UPDATE support_messages SET isReadByAdmin = TRUE WHERE senderRole = 'user'"
+      );
+    } else if (userId !== undefined) {
+      const numUserId = Number(userId);
+      if (!Number.isNaN(numUserId)) {
+        await pool.query(
+          "UPDATE support_messages SET isReadByUser = TRUE WHERE userId = ? AND senderRole = 'admin'",
+          [numUserId]
+        );
+      }
+    }
+  },
+
   async getUnreadCountForUser(userId: string | number): Promise<number> {
     await ensureTable();
     const numUserId = Number(userId);

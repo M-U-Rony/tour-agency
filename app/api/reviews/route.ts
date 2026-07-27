@@ -51,18 +51,18 @@ export async function POST(req: Request) {
     if (!booking || String(booking.userId) !== auth.userId) {
       return NextResponse.json({ message: "Booking not found" }, { status: 404 });
     }
-    if (booking.status === "cancelled") {
+    if (booking.status !== "confirmed" && booking.status !== "completed") {
       return NextResponse.json(
-        { message: "Cancelled bookings cannot be reviewed" },
+        { message: "Only admin-confirmed bookings can be reviewed after the tour ends" },
         { status: 400 }
       );
     }
 
     const travelDate = new Date(booking.travelDate);
-    const isExpired = booking.status === "completed" || travelDate.getTime() <= Date.now();
-    if (!isExpired) {
+    const isEnded = booking.status === "completed" || travelDate.getTime() <= Date.now();
+    if (!isEnded) {
       return NextResponse.json(
-        { message: "Review will be enabled after your trip date has passed" },
+        { message: "Review will be enabled after your tour has ended" },
         { status: 400 }
       );
     }

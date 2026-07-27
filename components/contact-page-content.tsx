@@ -85,17 +85,6 @@ export default function ContactPageContent({ isAuthed }: ContactPageContentProps
           >
             <MessageSquare size={16} /> Contact & Support Messages
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("custom")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              activeTab === "custom"
-                ? "bg-teal-700 text-white shadow-sm"
-                : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
-            }`}
-          >
-            <Plane size={16} /> Custom Trip Request
-          </button>
         </div>
 
         {activeTab === "messages" ? <SupportMessagesView /> : <CustomTripForm />}

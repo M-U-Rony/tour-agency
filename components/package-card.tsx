@@ -178,12 +178,16 @@ export default function PackageCard({
         <Link
           href={href}
           className={`mt-5 inline-flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold text-white shadow-sm transition-colors ${
-            isSoldOut
-              ? "bg-slate-500 hover:bg-slate-600"
+            !upcoming || isSoldOut
+              ? "bg-slate-700 hover:bg-slate-800"
               : "bg-teal-700 hover:bg-teal-800"
           }`}
         >
-          {isSoldOut ? "View Details (Sold Out)" : "View tour"}
+          {!upcoming
+            ? "View Details (Past Tour)"
+            : isSoldOut
+            ? "View Details (Sold Out)"
+            : "View tour"}
         </Link>
       </div>
     </article>

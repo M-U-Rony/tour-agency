@@ -33,6 +33,7 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
   const [bookings, setBookings] = useState<BookingDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [editingBooking, setEditingBooking] = useState<BookingDTO | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("all");
 
   const loadBookings = useCallback(async () => {
@@ -113,37 +114,6 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
           </p>
         </div>
 
-        {/* Highlight next trip */}
-        {next ? (
-          <BookingCard
-            booking={next}
-            onCancel={() => void cancelBooking(next.id)}
-            cancelling={pendingId === next.id}
-            isNext
-          />
-        ) : (
-          <div className="rounded-3xl border border-dashed border-emerald-200 bg-white p-8 text-center">
-            <h3 className="text-lg font-bold text-slate-900">No upcoming trips scheduled</h3>
-            <p className="mt-1.5 text-sm text-slate-600">
-              Browse our tour packages or request a custom trip to plan your next adventure!
-            </p>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href="/tours"
-                className="rounded-xl bg-teal-800 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-900 shadow-sm"
-              >
-                Explore tours
-              </Link>
-              <Link
-                href="/contact"
-                className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-teal-800 transition-colors hover:bg-emerald-100"
-              >
-                Custom trip request
-              </Link>
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* Header & Tabs */}
@@ -217,11 +187,20 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
                     booking={b}
                     onCancel={() => void cancelBooking(b.id)}
                     cancelling={pendingId === b.id}
+                    onEdit={() => setEditingBooking(b)}
                   />
                 ))}
               </div>
             )}
           </div>
+
+          {editingBooking && (
+            <EditBookingModal
+              booking={editingBooking}
+              onClose={() => setEditingBooking(null)}
+              onSave={() => void loadBookings()}
+            />
+          )}
 
           {/* Right Sidebar: Summary Stats */}
           <div className="space-y-6">
@@ -273,10 +252,12 @@ function BookingRow({
   booking,
   onCancel,
   cancelling,
+  onEdit,
 }: {
   booking: BookingDTO;
   onCancel: () => void;
   cancelling: boolean;
+  onEdit?: () => void;
 }) {
   const days = travelDateDaysFromLocalToday(booking.travelDate);
   return (
@@ -373,15 +354,26 @@ function BookingRow({
               <Download size={13} /> Download Payslip
             </a>
           )}
-          {booking.status === "pending" && (
-            <button
-              type="button"
-              disabled={cancelling}
-              onClick={onCancel}
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 cursor-pointer"
-            >
-              {cancelling ? "Cancelling…" : "Cancel"}
-            </button>
+          {(booking.status === "pending" || booking.status === "confirmed") && (
+            <>
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100 transition-colors cursor-pointer"
+                >
+                  Edit Booking
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={onCancel}
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 cursor-pointer"
+              >
+                {cancelling ? "Cancelling…" : "Cancel"}
+              </button>
+            </>
           )}
           {(booking.status === "completed" || (booking.status !== "cancelled" && travelDateIsBeforeLocalToday(booking.travelDate))) && (
             <ReviewPrompt booking={booking} />
@@ -396,11 +388,13 @@ function BookingCard({
   booking,
   onCancel,
   cancelling,
+  onEdit,
   isNext = false,
 }: {
   booking: BookingDTO;
   onCancel: () => void;
   cancelling: boolean;
+  onEdit?: () => void;
   isNext?: boolean;
 }) {
   const days = travelDateDaysFromLocalToday(booking.travelDate);
@@ -695,6 +689,161 @@ function PackageAnnouncements({ packageId }: { packageId: string }) {
             <p className="text-slate-600 whitespace-pre-wrap">{ann.message}</p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function EditBookingModal({
+  booking,
+  onClose,
+  onSave,
+}: {
+  booking: BookingDTO;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const [travelers, setTravelers] = useState(booking.travelers);
+  const [contactPhone, setContactPhone] = useState(booking.contactPhone);
+  const [travelerNames, setTravelerNames] = useState((booking.travelerNames ?? []).join("\n"));
+  const [emergencyContact, setEmergencyContact] = useState(booking.emergencyContact ?? "");
+  const [notes, setNotes] = useState(booking.notes ?? "");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          travelers,
+          contactPhone: contactPhone.trim(),
+          travelerNames: travelerNames
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          emergencyContact: emergencyContact.trim(),
+          notes: notes.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update booking");
+
+      onSave();
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "Network error");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+      <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-emerald-100 pb-3">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Edit Booking</h3>
+            <p className="text-xs text-slate-500">{booking.package?.title ?? "Tour Package"}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Travelers Count
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              required
+              value={travelers}
+              onChange={(e) => setTravelers(Number(e.target.value))}
+              className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Contact Phone
+            </span>
+            <input
+              type="tel"
+              required
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Traveler Names (one per line)
+            </span>
+            <textarea
+              rows={3}
+              value={travelerNames}
+              onChange={(e) => setTravelerNames(e.target.value)}
+              className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Emergency Contact
+            </span>
+            <input
+              type="tel"
+              value={emergencyContact}
+              onChange={(e) => setEmergencyContact(e.target.value)}
+              className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Special Notes
+            </span>
+            <textarea
+              rows={2}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full rounded-xl border border-emerald-100 bg-[#f4fbf8] px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500"
+            />
+          </label>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 rounded-xl bg-teal-700 py-2.5 text-xs font-semibold text-white hover:bg-teal-800 disabled:opacity-60 cursor-pointer"
+            >
+              {submitting ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

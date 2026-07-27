@@ -98,24 +98,7 @@ export default async function TourDetailPage({
               {pkg.shortDescription}
             </p>
 
-            {gallery.length > 1 && (
-              <div className="mt-8">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Destination Photo Gallery ({gallery.length} photos)
-                </h3>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {gallery.map((src, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={src + i}
-                      src={src}
-                      alt="Destination gallery photo"
-                      className="h-28 w-full rounded-2xl border border-emerald-100 object-cover shadow-sm transition-transform duration-300 hover:scale-[1.03]"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <Highlight title="What's included">{inclusions.join(", ")}.</Highlight>
@@ -167,6 +150,7 @@ export default async function TourDetailPage({
               endDate={pkg.endDate}
               availableDates={pkg.availableDates}
               adminPreview={auth?.role === "admin"}
+              guidePreview={auth?.role === "tour_guide"}
             />
           </aside>
         </div>

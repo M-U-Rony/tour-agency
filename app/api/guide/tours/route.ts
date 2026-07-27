@@ -33,7 +33,11 @@ export async function GET() {
     const tours = assignedDocs.map((doc) => {
       const pkg = serializeTourPackage(doc);
       const packageBookings = bookingRows
-        .filter((b) => b.packageId === doc.id)
+        .filter(
+          (b) =>
+            b.packageId === doc.id &&
+            (b.status === "confirmed" || b.status === "completed")
+        )
         .map((b) => ({
           id: String(b.id),
           userName: b.userName,
@@ -59,9 +63,10 @@ export async function GET() {
           guideName: a.guideName,
         }));
 
-      const totalConfirmedTravelers = packageBookings
-        .filter((b) => b.status === "confirmed" || b.status === "pending")
-        .reduce((sum, b) => sum + b.travelers, 0);
+      const totalConfirmedTravelers = packageBookings.reduce(
+        (sum, b) => sum + b.travelers,
+        0
+      );
 
       return {
         ...pkg,

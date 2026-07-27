@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DbConnect } from "@/db/connection";
-import { Booking, TourPackage, User } from "@/db/models";
+import { Booking, TourPackage, User, Payment } from "@/db/models";
 import { createBookingSchema } from "@/utils/zod/types";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import {
@@ -64,9 +64,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (auth.role === "admin") {
+    if (auth.role === "admin" || auth.role === "tour_guide") {
       return NextResponse.json(
-        { message: "Admins cannot create booking requests" },
+        { message: "Tour guides and admins cannot create booking requests" },
         { status: 403 }
       );
     }
@@ -92,6 +92,21 @@ export async function POST(req: Request) {
     const pkg = await TourPackage.findById(packageId);
     if (!pkg) {
       return NextResponse.json({ message: "Package not found" }, { status: 404 });
+    }
+
+    const existingBookings = await Booking.find({ userId: auth.userId });
+    const activeBooking = existingBookings.find(
+      (b) => String(b.packageId) === String(packageId) && b.status !== "cancelled"
+    );
+
+    if (activeBooking) {
+      return NextResponse.json(
+        {
+          message:
+            "You already have an active booking for this tour package. You can edit or cancel your existing booking from your dashboard.",
+        },
+        { status: 400 }
+      );
     }
 
     let date = parseTravelDateFromClient(travelDate);
@@ -135,6 +150,21 @@ export async function POST(req: Request) {
       transactionId,
       totalPriceBdt,
     });
+
+    // Automatically record payment entry in payments table
+    try {
+      await Payment.create({
+        bookingId: created.id,
+        userId: auth.userId,
+        amountBdt: totalPriceBdt,
+        paymentMethod: paymentMethod || "manual",
+        transactionId: transactionId || `TXN-B${created.id}`,
+        status: "pending",
+        notes: notes ? `Booking notes: ${notes}` : `Booking payment entry for ${pkg.title}`,
+      });
+    } catch (payErr) {
+      console.error("Failed to insert payment record:", payErr);
+    }
 
     await TourPackage.decrementAvailableSeats(packageId, travelers);
 

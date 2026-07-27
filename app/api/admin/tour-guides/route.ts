@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { DbConnect, pool } from "@/db/connection";
-import { User } from "@/db/models";
+import { User, TourPackage, CustomTripRequest } from "@/db/models";
 import { getAuthFromCookies } from "@/lib/auth-api";
 
 async function requireAdmin() {
@@ -23,8 +23,45 @@ export async function GET() {
     if (!auth) return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     await DbConnect();
     await ensureTourGuideEnum();
-    const guides = await User.findByRole("tour_guide");
-    return NextResponse.json({ guides });
+
+    const [guides, packages, customTrips] = await Promise.all([
+      User.findByRole("tour_guide"),
+      TourPackage.find(),
+      CustomTripRequest.find(),
+    ]);
+
+    const guidesWithTours = guides.map((guide) => {
+      const assignedPackages = packages
+        .filter((p) => String(p.tourGuideId) === String(guide.id))
+        .map((p) => ({
+          id: String(p.id),
+          title: p.title,
+          location: p.location,
+          duration: p.duration,
+          priceBdt: p.priceBdt,
+          type: "package" as const,
+        }));
+
+      const assignedCustomTrips = customTrips
+        .filter((ct) => String(ct.tourGuideId) === String(guide.id))
+        .map((ct) => ({
+          id: String(ct.id),
+          title: `Custom: ${ct.destination}`,
+          location: ct.destination,
+          duration: ct.tripType,
+          priceBdt: 0,
+          type: "custom" as const,
+        }));
+
+      return {
+        ...guide,
+        assignedPackages,
+        assignedCustomTrips,
+        totalAssignedTours: assignedPackages.length + assignedCustomTrips.length,
+      };
+    });
+
+    return NextResponse.json({ guides: guidesWithTours });
   } catch (err) {
     console.error("GET /api/admin/tour-guides:", err);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });

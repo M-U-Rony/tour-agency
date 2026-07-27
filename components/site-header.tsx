@@ -151,7 +151,11 @@ export default function SiteHeader({
                   <div className="border-b px-3 py-3">
                     <p className="truncate text-sm font-semibold">{user.username}</p>
                     <p className="text-xs text-slate-500">
-                      {user.role === "admin" ? "Administrator" : "Explorer"}
+                      {user.role === "admin"
+                        ? "Administrator"
+                        : user.role === "tour_guide"
+                        ? "Tour Guide"
+                        : "Explorer"}
                     </p>
                   </div>
                   <div className="py-1">

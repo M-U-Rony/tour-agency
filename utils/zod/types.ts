@@ -81,6 +81,12 @@ export const updateBookingStatusSchema = z.object({
     paymentMethod: z.string().max(80).optional(),
     transactionId: z.string().max(120).optional(),
     adminNotes: z.string().max(1500).optional(),
+    travelers: z.number().int().min(1).max(50).optional(),
+    travelDate: z.string().optional(),
+    contactPhone: z.string().min(5).max(40).optional(),
+    notes: z.string().max(1000).optional(),
+    travelerNames: z.array(z.string().trim().min(1).max(120)).max(50).optional(),
+    emergencyContact: z.string().max(120).optional(),
 })
 
 export const customTripRequestSchema = z.object({

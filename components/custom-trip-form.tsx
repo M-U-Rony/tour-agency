@@ -52,7 +52,7 @@ const initialForm: FormState = {
   tripType: "",
   departureDate: "",
   returnDate: "",
-  travelers: 2,
+  travelers: 1,
   children: 0,
   budget: "",
   accommodation: "",

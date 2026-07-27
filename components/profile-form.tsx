@@ -107,7 +107,12 @@ export default function ProfileForm() {
       )
     : null;
 
-  const roleLabel = user?.role === "admin" ? "Administrator" : "Explorer";
+  const roleLabel =
+    user?.role === "admin"
+      ? "Administrator"
+      : user?.role === "tour_guide"
+      ? "Tour Guide"
+      : "Explorer";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

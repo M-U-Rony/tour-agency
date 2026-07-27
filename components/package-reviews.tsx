@@ -45,26 +45,34 @@ export default function PackageReviews({
       ? (reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
       : null;
 
-  // Find eligible booking
-  // A booking is eligible if not cancelled
-  const activeBookings = userBookingsState.filter((b) => b.status !== "cancelled");
-  const hasBooking = activeBookings.length > 0;
+  // Only confirmed or completed bookings are eligible for review
+  const hasBooking = userBookingsState.length > 0;
+  const confirmedBookings = userBookingsState.filter(
+    (b) => b.status === "confirmed" || b.status === "completed"
+  );
+  const pendingBookings = userBookingsState.filter((b) => b.status === "pending");
 
-  // Check if any booking is expired (travelDate <= now or status === 'completed')
-  const now = new Date();
-  const eligibleBookingToReview = activeBookings.find((b) => {
+  const now = Date.now();
+
+  // 1. Confirmed by admin & tour date has passed & not reviewed yet
+  const eligibleBookingToReview = confirmedBookings.find((b) => {
     if (b.hasReviewed) return false;
-    const isExpired = b.status === "completed" || new Date(b.travelDate).getTime() <= now.getTime();
-    return isExpired;
+    const isEnded = b.status === "completed" || new Date(b.travelDate).getTime() <= now;
+    return isEnded;
   });
 
-  const unexpiredBooking = activeBookings.find((b) => {
+  // 2. Confirmed by admin but tour date has NOT passed yet
+  const confirmedUpcomingBooking = confirmedBookings.find((b) => {
     if (b.hasReviewed) return false;
-    const isExpired = b.status === "completed" || new Date(b.travelDate).getTime() <= now.getTime();
-    return !isExpired;
+    const isEnded = b.status === "completed" || new Date(b.travelDate).getTime() <= now;
+    return !isEnded;
   });
 
-  const allBookingsReviewed = hasBooking && activeBookings.every((b) => b.hasReviewed);
+  // 3. Pending admin confirmation
+  const pendingBooking = pendingBookings.find((b) => !b.hasReviewed);
+
+  // 4. Reviewed
+  const hasReviewedAny = userBookingsState.some((b) => b.hasReviewed);
 
   async function handleSubmitReview(e: React.FormEvent) {
     e.preventDefault();
@@ -260,28 +268,49 @@ export default function PackageReviews({
               </button>
             </form>
           </div>
-        ) : unexpiredBooking ? (
+        ) : confirmedUpcomingBooking ? (
           <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-5 flex items-start gap-3.5 text-amber-900">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
               <Calendar size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold">Review Unlocks After Trip</p>
+              <p className="text-sm font-semibold">Review Unlocks After Tour Ends</p>
               <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
-                You have a booking for this tour scheduled for{" "}
-                <span className="font-bold">{formatTravelDate(unexpiredBooking.travelDate)}</span>.
-                You can submit your review once your trip date has passed!
+                Your booking for <span className="font-bold">{formatTravelDate(confirmedUpcomingBooking.travelDate)}</span> is confirmed by admin.
+                You can submit your review once your tour date has passed!
               </p>
             </div>
           </div>
-        ) : allBookingsReviewed ? (
+        ) : pendingBooking ? (
+          <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-5 flex items-start gap-3.5 text-amber-900">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+              <Lock size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Awaiting Admin Confirmation</p>
+              <p className="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
+                Your booking request is currently pending admin review. Once confirmed by an admin and your tour date has passed, you will be able to leave a review!
+              </p>
+            </div>
+          </div>
+        ) : hasReviewedAny ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 flex items-center gap-3 text-emerald-900">
             <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
             <p className="text-xs font-medium">
               You have already reviewed your trip for this package. Thank you for sharing your feedback!
             </p>
           </div>
-        ) : null}
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 flex items-start gap-3 text-slate-700">
+            <Lock size={18} className="text-slate-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Reviewing is Restricted</p>
+              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                Only travelers with an admin-confirmed booking after their tour date has passed can post a review.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Reviews List */}

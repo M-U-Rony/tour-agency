@@ -1,7 +1,15 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { UserCheck, UserMinus, Search, Loader2, Mail, CalendarDays } from "lucide-react";
+import Link from "next/link";
+import { UserCheck, UserMinus, Search, Loader2, Mail, CalendarDays, Compass, MapPin, ClipboardList } from "lucide-react";
+
+type AssignedTourItem = {
+  id: string;
+  title: string;
+  location: string;
+  duration: string;
+  priceBdt: number;
+  type: "package" | "custom";
+};
 
 type GuideUser = {
   id: number;
@@ -9,6 +17,9 @@ type GuideUser = {
   email: string;
   profileImage: string;
   createdAt: string;
+  assignedPackages?: AssignedTourItem[];
+  assignedCustomTrips?: AssignedTourItem[];
+  totalAssignedTours?: number;
 };
 
 export default function TourGuidesView() {
@@ -167,54 +178,104 @@ export default function TourGuidesView() {
           </div>
         ) : (
           <ul className="divide-y divide-emerald-50">
-            {guides.map((guide) => (
-              <li key={guide.id} className="flex items-center justify-between gap-4 px-5 py-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  {guide.profileImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={guide.profileImage}
-                      alt={guide.name}
-                      className="h-9 w-9 rounded-full object-cover border border-emerald-100 shrink-0"
-                    />
-                  ) : (
-                    <div className="h-9 w-9 shrink-0 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-sm">
-                      {guide.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">{guide.name}</p>
-                    <p className="text-xs text-slate-500 truncate flex items-center gap-1">
-                      <Mail size={11} className="shrink-0" />
-                      {guide.email}
-                    </p>
-                  </div>
-                </div>
+            {guides.map((guide) => {
+              const pkgs = guide.assignedPackages ?? [];
+              const customTrips = guide.assignedCustomTrips ?? [];
+              const totalAssigned = guide.totalAssignedTours ?? (pkgs.length + customTrips.length);
 
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="hidden sm:flex items-center gap-1 text-xs text-slate-500">
-                    <CalendarDays size={12} />
-                    {new Date(guide.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                  </span>
-                  <span className="rounded-full bg-teal-50 border border-teal-100 px-2.5 py-0.5 text-[11px] font-bold text-teal-700">
-                    Tour Guide
-                  </span>
-                  <button
-                    type="button"
-                    disabled={removingEmail === guide.email}
-                    onClick={() => void handleRemove(guide)}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    {removingEmail === guide.email ? (
-                      <Loader2 size={13} className="animate-spin" />
+              return (
+                <li key={guide.id} className="p-5 space-y-3.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {guide.profileImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={guide.profileImage}
+                          alt={guide.name}
+                          className="h-10 w-10 rounded-full object-cover border border-emerald-100 shrink-0"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 shrink-0 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-sm">
+                          {guide.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-base font-bold text-slate-900 truncate">{guide.name}</p>
+                          <span className="rounded-full bg-teal-50 border border-teal-100 px-2.5 py-0.5 text-[11px] font-bold text-teal-700">
+                            Tour Guide
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 truncate flex items-center gap-1.5 mt-0.5">
+                          <Mail size={12} className="shrink-0 text-teal-700" />
+                          {guide.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+                      <span className="hidden sm:flex items-center gap-1 text-xs text-slate-500">
+                        <CalendarDays size={13} />
+                        Joined {new Date(guide.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={removingEmail === guide.email}
+                        onClick={() => void handleRemove(guide)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        {removingEmail === guide.email ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          <UserMinus size={13} />
+                        )}
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Assigned Tours Section */}
+                  <div className="rounded-xl border border-emerald-100/70 bg-[#f4fbf8] p-3.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                        <Compass size={14} className="text-teal-700" />
+                        Assigned Tours & Packages ({totalAssigned})
+                      </span>
+                    </div>
+
+                    {totalAssigned === 0 ? (
+                      <p className="text-xs text-slate-400 italic">No tours currently assigned to this guide.</p>
                     ) : (
-                      <UserMinus size={13} />
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {pkgs.map((p) => (
+                          <Link
+                            key={p.id}
+                            href={`/tours/${p.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-white px-2.5 py-1 text-xs font-semibold text-teal-800 shadow-2xs hover:bg-teal-50 transition-colors"
+                          >
+                            <Compass size={13} className="text-teal-700 shrink-0" />
+                            <span className="truncate max-w-[200px]">{p.title}</span>
+                            <span className="text-[10px] text-slate-500 font-normal">({p.location})</span>
+                          </Link>
+                        ))}
+
+                        {customTrips.map((ct) => (
+                          <Link
+                            key={ct.id}
+                            href="/admin/custom-trips"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900 shadow-2xs hover:bg-amber-100 transition-colors"
+                          >
+                            <ClipboardList size={13} className="text-amber-700 shrink-0" />
+                            <span className="truncate max-w-[200px]">{ct.title}</span>
+                            <span className="text-[10px] text-amber-700 font-normal">({ct.duration})</span>
+                          </Link>
+                        ))}
+                      </div>
                     )}
-                    Remove
-                  </button>
-                </div>
-              </li>
-            ))}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

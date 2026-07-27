@@ -338,6 +338,15 @@ export const TourPackage = {
     );
   },
 
+  async incrementAvailableSeats(id: string | number, count: number): Promise<void> {
+    const numId = Number(id);
+    if (Number.isNaN(numId)) return;
+    await pool.query(
+      "UPDATE tour_packages SET availableSeats = LEAST(totalSeats, availableSeats + ?) WHERE id = ?",
+      [count, numId]
+    );
+  },
+
   async findByIdAndDelete(id: string | number): Promise<TourPackageRow | null> {
     const numId = Number(id);
     if (Number.isNaN(numId)) return null;

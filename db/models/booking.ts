@@ -120,6 +120,13 @@ export const Booking = {
       paymentMethod: string;
       transactionId: string;
       adminNotes: string;
+      travelers: number;
+      travelDate: Date;
+      contactPhone: string;
+      notes: string;
+      travelerNames: string[];
+      emergencyContact: string;
+      totalPriceBdt: number;
     }>
   ): Promise<BookingRow | null> => {
     const numId = Number(id);
@@ -133,6 +140,13 @@ export const Booking = {
     if (data.paymentMethod !== undefined) { fields.push("paymentMethod = ?"); values.push(data.paymentMethod); }
     if (data.transactionId !== undefined) { fields.push("transactionId = ?"); values.push(data.transactionId); }
     if (data.adminNotes !== undefined) { fields.push("adminNotes = ?"); values.push(data.adminNotes); }
+    if (data.travelers !== undefined) { fields.push("travelers = ?"); values.push(data.travelers); }
+    if (data.travelDate !== undefined) { fields.push("travelDate = ?"); values.push(data.travelDate); }
+    if (data.contactPhone !== undefined) { fields.push("contactPhone = ?"); values.push(data.contactPhone); }
+    if (data.notes !== undefined) { fields.push("notes = ?"); values.push(data.notes); }
+    if (data.travelerNames !== undefined) { fields.push("travelerNames = ?"); values.push(JSON.stringify(data.travelerNames)); }
+    if (data.emergencyContact !== undefined) { fields.push("emergencyContact = ?"); values.push(data.emergencyContact); }
+    if (data.totalPriceBdt !== undefined) { fields.push("totalPriceBdt = ?"); values.push(data.totalPriceBdt); }
 
     if (fields.length === 0) return Booking.findById(numId);
 

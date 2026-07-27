@@ -14,10 +14,14 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/signin");
+      return;
+    }
+    if (!isLoading && user?.role === "tour_guide") {
+      router.push("/guide/dashboard");
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user) {
+  if (isLoading || !user || user.role === "tour_guide") {
     return <LoadingSpinner fullScreen />;
   }
 

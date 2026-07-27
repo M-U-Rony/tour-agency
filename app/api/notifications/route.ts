@@ -66,7 +66,7 @@ export async function GET() {
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
-      const totalUnread = unreadCount + announcements.length;
+      const totalUnread = unreadCount;
 
       return NextResponse.json({ unreadCount: totalUnread, notifications: allNotifications });
     }
@@ -90,11 +90,11 @@ export async function POST(req: Request) {
 
     if (threadId) {
       await SupportMessage.markAsRead(threadId, auth.role === "admin" ? "admin" : "user");
-    } else if (auth.role !== "admin") {
-      const userMessages = await SupportMessage.find({ userId: auth.userId });
-      if (userMessages.length > 0) {
-        await SupportMessage.markAsRead(userMessages[0].threadId, "user");
-      }
+    } else {
+      await SupportMessage.markAllAsRead(
+        auth.role === "admin" ? "admin" : "user",
+        auth.role === "admin" ? undefined : auth.userId
+      );
     }
 
     return NextResponse.json({ success: true });
