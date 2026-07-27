@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ExploreBD Tours",
-  description: "Book curated tours across Bangladesh.",
+  title: "BONGO TRIP",
+  description: "Book curated tours across Bangladesh with BONGO TRIP.",
 };
 
 export default function RootLayout({

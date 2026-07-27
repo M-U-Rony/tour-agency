@@ -25,6 +25,14 @@ function normalizeReviewRow(row: any): ReviewRow {
   return norm;
 }
 
+export type ReviewWithDetails = ReviewRow & {
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  packageTitle: string;
+  packageLocation: string;
+};
+
 export const Review = {
   async find(filter: { packageId?: string | number } = {}): Promise<ReviewRow[]> {
     if (filter.packageId !== undefined) {
@@ -40,6 +48,26 @@ export const Review = {
       "SELECT * FROM reviews ORDER BY createdAt DESC"
     );
     return rows.map(normalizeReviewRow);
+  },
+
+  async findWithDetails(limit: number = 6): Promise<ReviewWithDetails[]> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT r.*, u.name as userName, u.email as userEmail, u.role as userRole, p.title as packageTitle, p.location as packageLocation
+       FROM reviews r
+       LEFT JOIN users u ON r.userId = u.id
+       LEFT JOIN tour_packages p ON r.packageId = p.id
+       ORDER BY r.createdAt DESC
+       LIMIT ?`,
+      [limit]
+    );
+    return rows.map((row) => ({
+      ...normalizeReviewRow(row),
+      userName: row.userName || "Valued Traveler",
+      userEmail: row.userEmail || "",
+      userRole: row.userRole || "Explorer",
+      packageTitle: row.packageTitle || "Tour Package",
+      packageLocation: row.packageLocation || "Bangladesh",
+    }));
   },
 
   async create(data: {

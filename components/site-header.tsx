@@ -98,9 +98,9 @@ export default function SiteHeader({
 
           <Link href="/" className="flex min-w-0 items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="ExploreBD" className="h-9 w-auto object-contain" />
+            <img src="/logo.jpg" alt="BONGO TRIP" className="h-9 w-auto rounded-lg object-cover" />
             <span className="truncate text-sm font-extrabold tracking-tight text-slate-900 sm:text-base">
-              ExploreBD
+              BONGO TRIP
             </span>
           </Link>
         </div>

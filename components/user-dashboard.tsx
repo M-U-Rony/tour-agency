@@ -232,13 +232,6 @@ export default function UserDashboard({ user }: { user: AuthUser }) {
                   <span>Explore All Tour Packages</span>
                   <span>&rarr;</span>
                 </Link>
-                <Link
-                  href="/contact"
-                  className="flex items-center justify-between rounded-xl border border-emerald-100 bg-white p-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  <span>Request Custom Itinerary</span>
-                  <span>&rarr;</span>
-                </Link>
               </div>
             </div>
           </div>

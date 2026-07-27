@@ -311,8 +311,8 @@ export default function AccountShell({
         <div className="flex h-16 items-center gap-2 border-b border-emerald-100 px-6">
           <Link href={isAdmin ? "/admin/dashboard" : "/dashboard"} className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="ExploreBD" className="h-9 w-auto object-contain" />
-            <span className="text-lg font-bold tracking-tight text-teal-800">ExploreBD</span>
+            <img src="/logo.jpg" alt="BONGO TRIP" className="h-9 w-auto rounded-lg object-cover" />
+            <span className="text-lg font-bold tracking-tight text-teal-800">BONGO TRIP</span>
           </Link>
           <button
             type="button"

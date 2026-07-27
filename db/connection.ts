@@ -208,6 +208,22 @@ export async function DbConnect() {
         `);
 
         await pool.query(`
+          CREATE TABLE IF NOT EXISTS support_threads (
+            id VARCHAR(100) PRIMARY KEY,
+            userId INT NOT NULL,
+            subject VARCHAR(255) NOT NULL DEFAULT 'General Inquiry',
+            status ENUM('open', 'closed') DEFAULT 'open',
+            isReadByAdmin BOOLEAN DEFAULT FALSE,
+            isReadByUser BOOLEAN DEFAULT FALSE,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_userId (userId),
+            INDEX idx_status (status),
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+
+        await pool.query(`
           CREATE TABLE IF NOT EXISTS support_messages (
             id INT AUTO_INCREMENT PRIMARY KEY,
             threadId VARCHAR(100) NOT NULL,

@@ -30,7 +30,7 @@ export default function GlobalSidebarLayout({
   const shouldWrapGlobally = !!user && !isSignRoute && !isAuthRoute;
 
   if (shouldWrapGlobally) {
-    let title = "ExploreBD";
+    let title = "BONGO TRIP";
     if (pathname === "/") title = "Home";
     else if (pathname.startsWith("/tours/")) title = "Tour Details";
     else if (pathname === "/tours") title = "Explore Tours";

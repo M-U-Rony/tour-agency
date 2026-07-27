@@ -4,6 +4,7 @@ import LandingNav from "@/components/landing-nav";
 import type { TourPackageDTO } from "@/lib/tour-package";
 import { formatBdt } from "@/lib/tour-package";
 import type { AuthUser } from "@/lib/auth-user";
+import type { LandingReviewDTO } from "@/lib/review";
 
 const destinations = [
   {
@@ -77,38 +78,15 @@ const reasons = [
   "Best travel experience",
 ] as const;
 
-const testimonials = [
-  {
-    name: "Nusrat Jahan",
-    role: "Family Traveler",
-    quote: "Everything felt polished from transport pickup to hotel check-in. Cox's Bazar was effortless with them.",
-    image:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    name: "Fahim Rahman",
-    role: "Adventure Seeker",
-    quote: "Our Sajek trip was organized with real attention to timing, safety, and the best viewpoints.",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    name: "Samira Ahmed",
-    role: "Corporate Client",
-    quote: "We booked a group retreat in Sylhet and the coordination was strong throughout the entire tour.",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=300&q=80",
-  },
-] as const;
-
-function StarRow() {
+function StarRow({ rating = 5 }: { rating?: number }) {
   return (
-    <div className="flex items-center gap-1 text-amber-400" aria-label="5 star rating">
+    <div className="flex items-center gap-1 text-amber-400" aria-label={`${rating} star rating`}>
       {Array.from({ length: 5 }).map((_, index) => (
         <svg
           key={index}
           viewBox="0 0 20 20"
-          fill="currentColor"
+          fill={index < Math.round(rating) ? "currentColor" : "none"}
+          stroke={index < Math.round(rating) ? "none" : "currentColor"}
           className="h-4 w-4"
           aria-hidden="true"
         >
@@ -136,10 +114,11 @@ function CheckIcon() {
 
 type LandingProps = {
   topPackages?: TourPackageDTO[];
+  dbReviews?: LandingReviewDTO[];
   currentUser?: AuthUser | null;
 };
 
-export default function Landing({ topPackages, currentUser }: LandingProps = {}) {
+export default function Landing({ topPackages, dbReviews = [], currentUser }: LandingProps = {}) {
   const packages =
     topPackages && topPackages.length > 0 ? topPackages : fallbackPackages;
   const user = currentUser ?? null;
@@ -447,34 +426,54 @@ export default function Landing({ topPackages, currentUser }: LandingProps = {})
           </h2>
         </div>
 
-        <div className="mt-10 grid gap-6 xl:grid-cols-3">
-          {testimonials.map((testimonial) => (
-            <article
-              key={testimonial.name}
-              className="rounded-4xl bg-white p-7 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70"
-            >
-              <div className="flex items-center gap-4">
-                <div className="relative h-16 w-16 overflow-hidden rounded-full">
-                  <Image
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    fill
-                    sizes="64px"
-                    className="object-cover"
-                  />
+        {(!dbReviews || dbReviews.length === 0) ? (
+          <div className="mt-8 rounded-3xl border border-dashed border-emerald-200 bg-white p-10 text-center">
+            <p className="text-base font-bold text-slate-900">No traveler reviews yet</p>
+            <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+              Book a tour today and be the first traveler to leave an authentic review after your trip!
+            </p>
+          </div>
+        ) : (
+          <div className="mt-10 grid gap-6 xl:grid-cols-3">
+            {dbReviews.map((rev) => (
+              <article
+                key={rev.id}
+                className="rounded-4xl bg-white p-7 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{rev.userName}</h3>
+                      <p className="text-xs font-semibold text-teal-800">{rev.packageTitle}</p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800 border border-emerald-100 uppercase tracking-wider">
+                      Verified
+                    </span>
+                  </div>
+
+                  <div>
+                    <StarRow rating={rev.rating} />
+                  </div>
+
+                  <p className="text-sm leading-relaxed text-slate-600 italic">
+                    &ldquo;{rev.comment}&rdquo;
+                  </p>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-900">{testimonial.name}</h3>
-                  <p className="text-sm text-slate-500">{testimonial.role}</p>
+
+                <div className="pt-4 mt-4 text-[11px] text-slate-400 border-t border-slate-100 flex items-center justify-between">
+                  <span>{rev.packageLocation}</span>
+                  <span>
+                    {new Date(rev.createdAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
-              </div>
-              <div className="mt-5">
-                <StarRow />
-              </div>
-              <p className="mt-5 text-base leading-8 text-slate-600">&ldquo;{testimonial.quote}&rdquo;</p>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section id="cta" className="px-6 pb-20 lg:px-10">

@@ -11,6 +11,16 @@ export type ReviewDTO = {
   } | null;
 };
 
+export type LandingReviewDTO = {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  userName: string;
+  packageTitle: string;
+  packageLocation: string;
+};
+
 export function serializeReview(
   doc: {
     _id: unknown;

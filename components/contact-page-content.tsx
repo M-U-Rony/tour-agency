@@ -27,7 +27,7 @@ const contactDetails = [
   {
     icon: Mail,
     label: "Email",
-    value: "hello@explorebdtours.com",
+    value: "support@bongotrip.com",
   },
   {
     icon: Clock,

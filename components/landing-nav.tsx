@@ -29,9 +29,9 @@ export default function LandingNav({ user }: { user: AuthUser | null }) {
       <div className="flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-4 py-3 text-white shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur md:px-6">
         <Link href="/" className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="ExploreBD" className="h-10 w-auto object-contain" />
+          <img src="/logo.jpg" alt="BONGO TRIP" className="h-10 w-auto rounded-lg object-cover" />
           <div>
-            <p className="text-lg font-semibold tracking-wide">ExploreBD</p>
+            <p className="text-lg font-semibold tracking-wide">BONGO TRIP</p>
             <p className="hidden text-xs text-white/70 sm:block">
               Premium travel across Bangladesh
             </p>

@@ -7,8 +7,6 @@ import {
   Clock,
   Calendar,
   Users,
-  Phone,
-  MessageCircle,
   ChevronDown,
   ChevronUp,
   Loader2,
@@ -69,10 +67,30 @@ type AssignedTour = {
   announcements?: TripAnnouncementItem[];
 };
 
+function getTourTimeStatus(tour: AssignedTour): "present" | "upcoming" | "past" {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  if (tour.startDate) {
+    const start = new Date(tour.startDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = tour.endDate ? new Date(tour.endDate) : new Date(start);
+    end.setHours(23, 59, 59, 999);
+
+    if (now >= start && now <= end) return "present";
+    if (now < start) return "upcoming";
+    if (now > end) return "past";
+  }
+
+  return "upcoming";
+}
+
 export default function GuideDashboardView() {
   const [tours, setTours] = useState<AssignedTour[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedTourId, setExpandedTourId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "present" | "upcoming" | "past">("all");
 
   // Broadcast modal state
   const [broadcastTour, setBroadcastTour] = useState<AssignedTour | null>(null);
@@ -226,13 +244,84 @@ export default function GuideDashboardView() {
             You currently have no active or upcoming tours assigned by the agency administrator. Once assigned, your tour packages and traveler lists will appear here.
           </p>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {tours.map((tour) => {
-            const isExpanded = expandedTourId === tour.id;
-            const confirmedBookings = tour.bookings.filter(
-              (b) => b.status === "confirmed" || b.status === "pending"
-            );
+      ) : (() => {
+        const presentTours = tours.filter((t) => getTourTimeStatus(t) === "present");
+        const upcomingTours = tours.filter((t) => getTourTimeStatus(t) === "upcoming");
+        const pastTours = tours.filter((t) => getTourTimeStatus(t) === "past");
+
+        const displayedTours = tours.filter((t) => {
+          if (activeTab === "present") return getTourTimeStatus(t) === "present";
+          if (activeTab === "upcoming") return getTourTimeStatus(t) === "upcoming";
+          if (activeTab === "past") return getTourTimeStatus(t) === "past";
+          return true;
+        });
+
+        return (
+          <div className="space-y-6">
+            {/* Level Filter Tabs */}
+            <div className="flex flex-wrap items-center gap-2 border-b border-emerald-100 pb-3">
+              <button
+                type="button"
+                onClick={() => setActiveTab("all")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "all"
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "bg-white text-slate-600 border border-emerald-100 hover:bg-emerald-50"
+                }`}
+              >
+                All Assigned ({tours.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("present")}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "present"
+                    ? "bg-emerald-700 text-white shadow-sm"
+                    : "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
+                }`}
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                </span>
+                Present / Live ({presentTours.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("upcoming")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "upcoming"
+                    ? "bg-teal-800 text-white shadow-sm"
+                    : "bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100"
+                }`}
+              >
+                Upcoming ({upcomingTours.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("past")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "past"
+                    ? "bg-slate-700 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+                }`}
+              >
+                Past / Completed ({pastTours.length})
+              </button>
+            </div>
+
+            {displayedTours.length === 0 ? (
+              <div className="rounded-2xl border border-slate-100 bg-white p-8 text-center text-slate-500">
+                <p className="text-sm font-semibold text-slate-700">No {activeTab} tours found</p>
+                <p className="text-xs text-slate-400 mt-1">Select another level tab to view your assigned tours.</p>
+              </div>
+            ) : (
+              displayedTours.map((tour) => {
+                const timeStatus = getTourTimeStatus(tour);
+                const isExpanded = expandedTourId === tour.id;
+                const confirmedBookings = tour.bookings.filter(
+                  (b) => b.status === "confirmed" || b.status === "pending"
+                );
 
             const attendingTravelers = tour.bookings
               .filter((b) => b.attendanceStatus === "attending")
@@ -279,6 +368,23 @@ export default function GuideDashboardView() {
                   <div className="flex-1 min-w-0 flex flex-col justify-between space-y-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 mb-1.5">
+                        {timeStatus === "present" ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-0.5 text-xs font-extrabold text-white shadow-2xs">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                            </span>
+                            PRESENT / LIVE TOUR
+                          </span>
+                        ) : timeStatus === "upcoming" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200 px-3 py-0.5 text-xs font-bold text-teal-800">
+                            UPCOMING TOUR
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-3 py-0.5 text-xs font-bold text-slate-700">
+                            PAST / COMPLETED TOUR
+                          </span>
+                        )}
                         <span className="inline-flex items-center gap-1 bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-md border border-teal-100">
                           <Clock size={12} /> {tour.duration}
                         </span>
@@ -599,26 +705,6 @@ export default function GuideDashboardView() {
                                     </button>
                                   )}
                                 </div>
-
-                                {/* Contact Shortcuts */}
-                                <div className="flex items-center gap-2">
-                                  <a
-                                    href={`tel:${b.contactPhone}`}
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                  >
-                                    <Phone size={12} /> Call
-                                  </a>
-                                  {waPhone && (
-                                    <a
-                                      href={`https://wa.me/${waPhone}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800 hover:bg-teal-100 transition-colors"
-                                    >
-                                      <MessageCircle size={12} /> WhatsApp
-                                    </a>
-                                  )}
-                                </div>
                               </div>
                             </div>
                           );
@@ -629,9 +715,11 @@ export default function GuideDashboardView() {
                 )}
               </div>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
+    );
+  })()}
 
       {/* Assigned Custom Trips Section */}
       {customTrips.length > 0 && (
@@ -686,24 +774,6 @@ export default function GuideDashboardView() {
                     </div>
                   )}
 
-                  <div className="pt-2 flex flex-wrap gap-2">
-                    <a
-                      href={`tel:${ct.phone}`}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors"
-                    >
-                      <Phone size={13} /> Call Traveler
-                    </a>
-                    {waPhone && (
-                      <a
-                        href={`https://wa.me/${waPhone}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100 transition-colors"
-                      >
-                        <MessageCircle size={13} /> WhatsApp
-                      </a>
-                    )}
-                  </div>
                 </div>
               );
             })}

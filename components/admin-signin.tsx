@@ -75,9 +75,9 @@ export default function AdminSignIn({ next = null }: { next?: string | null }) {
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
         <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="ExploreBD" className="h-9 w-auto object-contain" />
+          <img src="/logo.jpg" alt="BONGO TRIP" className="h-9 w-auto rounded-lg object-cover" />
           <span className="text-base font-extrabold tracking-tight text-white">
-            ExploreBD
+            BONGO TRIP
           </span>
         </Link>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-xs font-semibold text-teal-300">
@@ -96,7 +96,7 @@ export default function AdminSignIn({ next = null }: { next?: string | null }) {
               Admin Sign In
             </h1>
             <p className="mt-2 text-xs text-slate-400">
-              Access the ExploreBD administration dashboard to manage packages, bookings, and users.
+              Access the BONGO TRIP administration dashboard to manage packages, bookings, and users.
             </p>
           </div>
 
@@ -116,7 +116,7 @@ export default function AdminSignIn({ next = null }: { next?: string | null }) {
                 type="email"
                 required
                 className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3.5 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition duration-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-                placeholder="admin@explorebdtours.com"
+                placeholder="admin@bongotrip.com"
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
@@ -163,7 +163,7 @@ export default function AdminSignIn({ next = null }: { next?: string | null }) {
 
       {/* Simple Footer */}
       <footer className="py-6 text-center text-xs text-slate-600">
-        &copy; {new Date().getFullYear()} ExploreBD Admin Security System
+        &copy; {new Date().getFullYear()} BONGO TRIP Admin Security System
       </footer>
     </div>
   );

@@ -1,15 +1,17 @@
 import Landing from "@/components/landing";
 import { DbConnect } from "@/db/connection";
-import { TourPackage, User } from "@/db/models";
+import { TourPackage, User, Review } from "@/db/models";
 import { serializeTourPackage, type TourPackageDTO } from "@/lib/tour-package";
 import { getAuthFromCookies } from "@/lib/auth-api";
 import { toAuthUser, type AuthUser, type UserDoc } from "@/lib/auth-user";
+import type { LandingReviewDTO } from "@/lib/review";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   let topPackages: TourPackageDTO[] = [];
+  let dbReviews: LandingReviewDTO[] = [];
   let currentUser: AuthUser | null = null;
 
   try {
@@ -21,6 +23,21 @@ export default async function Home() {
     topPackages = docs.map((doc) => serializeTourPackage(doc));
   } catch {
     topPackages = [];
+  }
+
+  try {
+    const reviewsWithDetails = await Review.findWithDetails(6);
+    dbReviews = reviewsWithDetails.map((r) => ({
+      id: String(r.id),
+      rating: r.rating,
+      comment: r.comment,
+      createdAt: r.createdAt.toISOString(),
+      userName: r.userName,
+      packageTitle: r.packageTitle,
+      packageLocation: r.packageLocation,
+    }));
+  } catch {
+    dbReviews = [];
   }
 
   try {
@@ -37,5 +54,5 @@ export default async function Home() {
     redirect(currentUser.role === "admin" ? "/admin/dashboard" : "/dashboard");
   }
 
-  return <Landing topPackages={topPackages} currentUser={currentUser} />;
+  return <Landing topPackages={topPackages} dbReviews={dbReviews} currentUser={currentUser} />;
 }

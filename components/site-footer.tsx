@@ -52,9 +52,9 @@ export default function SiteFooter() {
           <div className="md:col-span-2 space-y-4">
             <Link href="/" className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="ExploreBD" className="h-9 w-auto object-contain" />
+              <img src="/logo.jpg" alt="BONGO TRIP" className="h-9 w-auto rounded-lg object-cover" />
               <span className="text-base font-extrabold tracking-tight text-white">
-                ExploreBD
+                BONGO TRIP
               </span>
             </Link>
             <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
@@ -119,7 +119,7 @@ export default function SiteFooter() {
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail size={16} className="text-teal-500 shrink-0" />
-                <span>hello@explorebdtours.com</span>
+                <span>support@bongotrip.com</span>
               </li>
             </ul>
           </div>
@@ -127,7 +127,7 @@ export default function SiteFooter() {
 
         {/* Bottom copyright area */}
         <div className="border-t border-slate-800/60 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} ExploreBD. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} BONGO TRIP. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <Link href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-slate-300 transition-colors">Terms of Service</Link>

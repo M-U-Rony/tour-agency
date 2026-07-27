@@ -7,3 +7,4 @@ export * from "./payment";
 export * from "./message";
 export * from "./wishlist";
 export * from "./trip-announcement";
+export * from "./thread";

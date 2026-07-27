@@ -1,6 +1,7 @@
 import { pool } from "../connection";
 import { RowDataPacket, ResultSetHeader } from "mysql2/promise";
 import { normalizeRow } from "./utils";
+import { SupportThread } from "./thread";
 
 export type SupportMessageRow = {
   id: number;
@@ -125,6 +126,21 @@ export const SupportMessage = {
       [result.insertId]
     );
     if (!rows.length) throw new Error("Failed to create support message");
+
+    // Sync normalized support_threads table entity
+    try {
+      await SupportThread.upsert({
+        id: threadId,
+        userId: numUserId,
+        subject,
+        status: "open",
+        isReadByAdmin,
+        isReadByUser,
+      });
+    } catch (err) {
+      console.error("Failed to sync support thread entity:", err);
+    }
+
     return normalizeMessageRow(rows[0]);
   },
 
@@ -141,6 +157,7 @@ export const SupportMessage = {
         [threadId]
       );
     }
+    await SupportThread.markAsRead(threadId, role);
   },
 
   async markAllAsRead(role: "user" | "admin", userId?: string | number): Promise<void> {
@@ -158,6 +175,7 @@ export const SupportMessage = {
         );
       }
     }
+    await SupportThread.markAllAsRead(role, userId);
   },
 
   async getUnreadCountForUser(userId: string | number): Promise<number> {

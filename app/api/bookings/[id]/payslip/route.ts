@@ -54,7 +54,7 @@ export async function GET(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payslip - Booking #${booking.id} - ExploreBD Tours</title>
+  <title>Payslip - Booking #${booking.id} - BONGO TRIP</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -244,7 +244,7 @@ export async function GET(
 
   <div class="print-actions">
     <div>
-      <strong style="color:#0f766e; font-size:14px;">ExploreBD Tours Official Payslip</strong>
+      <strong style="color:#0f766e; font-size:14px;">BONGO TRIP Official Payslip</strong>
     </div>
     <div style="display:flex; gap:10px;">
       <button onclick="window.print()" class="btn btn-primary">🖨️ Print / Save PDF</button>
@@ -255,8 +255,8 @@ export async function GET(
   <div class="container">
     <div class="header">
       <div>
-        <h1 class="brand-title">ExploreBD Tours</h1>
-        <p class="brand-sub">Gulshan Avenue, Dhaka 1212 · hello@explorebdtours.com · +880 1700-123456</p>
+        <h1 class="brand-title">BONGO TRIP</h1>
+        <p class="brand-sub">Gulshan Avenue, Dhaka 1212 · support@bongotrip.com · +880 1700-123456</p>
       </div>
       <div class="doc-title">
         <h2>Official Payslip</h2>
@@ -342,7 +342,7 @@ export async function GET(
     ` : ""}
 
     <div class="footer">
-      <p>Thank you for traveling with ExploreBD Tours!</p>
+      <p>Thank you for traveling with BONGO TRIP!</p>
       <p style="margin-top:4px;">This document is an official computer-generated receipt. No signature required.</p>
     </div>
   </div>
